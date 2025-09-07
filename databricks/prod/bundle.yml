@@ -1,0 +1,70 @@
+bundle:
+  name: ml-pipeline-prod
+
+dependencies: []
+
+resources:
+  jobs:
+    ml_pipeline_prod:
+      name: ml-pipeline-prod
+      experiment_name: "/Shared/prod_pipeline_experiment"
+      tasks:
+        - task_key: prepare_data
+          python_wheel_task:
+            package_name: databricks_ml_pipelines
+            entry_point: prepare-data
+          job_cluster_key: prepare_cluster
+        - task_key: train
+          depends_on:
+            - task_key: prepare_data
+          python_wheel_task:
+            package_name: databricks_ml_pipelines
+            entry_point: train-model
+          job_cluster_key: train_cluster
+        - task_key: evaluate
+          depends_on:
+            - task_key: train
+          python_wheel_task:
+            package_name: databricks_ml_pipelines
+            entry_point: evaluate-model
+          job_cluster_key: eval_cluster
+        - task_key: feature_importance
+          depends_on:
+            - task_key: train
+          python_wheel_task:
+            package_name: databricks_ml_pipelines
+            entry_point: feature-importance
+          job_cluster_key: fi_cluster
+        - task_key: model_qa
+          depends_on:
+            - task_key: train
+          python_wheel_task:
+            package_name: databricks_ml_pipelines
+            entry_point: model-qa
+          job_cluster_key: qa_cluster
+      job_clusters:
+        - job_cluster_key: prepare_cluster
+          new_cluster:
+            spark_version: "<SPARK_VERSION>"
+            node_type_id: "<NODE_TYPE>"
+            num_workers: 1
+        - job_cluster_key: train_cluster
+          new_cluster:
+            spark_version: "<SPARK_VERSION>"
+            node_type_id: "<NODE_TYPE>"
+            num_workers: 1
+        - job_cluster_key: eval_cluster
+          new_cluster:
+            spark_version: "<SPARK_VERSION>"
+            node_type_id: "<NODE_TYPE>"
+            num_workers: 1
+        - job_cluster_key: fi_cluster
+          new_cluster:
+            spark_version: "<SPARK_VERSION>"
+            node_type_id: "<NODE_TYPE>"
+            num_workers: 1
+        - job_cluster_key: qa_cluster
+          new_cluster:
+            spark_version: "<SPARK_VERSION>"
+            node_type_id: "<NODE_TYPE>"
+            num_workers: 1

@@ -1,0 +1,34 @@
+[project]
+name = "databricks-ml-pipelines"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "hydra-core>=1.3.2",
+    "matplotlib>=3.10.6",
+    "mlflow>=3.3.2",
+    "numpy>=2.3.2",
+    "pandas>=2.3.2",
+    "scikit-learn>=1.7.1",
+]
+
+[project.scripts]
+run-pipeline = "ml_pipelines.pipeline:main"
+prepare-data = "ml_pipelines.steps.prepare_data:main"
+train-model = "ml_pipelines.steps.train:main"
+evaluate-model = "ml_pipelines.steps.evaluate:main"
+feature-importance = "ml_pipelines.steps.feature_importance:main"
+model-qa = "ml_pipelines.steps.model_qa:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"ml_pipelines" = ["conf/**/*.yaml"]
+
+[tool.uv]
+package = true

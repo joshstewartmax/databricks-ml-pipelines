@@ -9,7 +9,8 @@
     {
       "task_key": "prepare_data",
       "spark_python_task": {
-        "python_file": "src/ml_pipelines/steps/prepare_data.py"
+        "python_file": "src/ml_pipelines/steps/prepare_data.py",
+        "source": "GIT"
       },
       "existing_cluster_id": "0609-090345-4rjuomtp"
     },
@@ -19,7 +20,8 @@
         { "task_key": "prepare_data" }
       ],
       "spark_python_task": {
-        "python_file": "src/ml_pipelines/steps/train.py"
+        "python_file": "src/ml_pipelines/steps/train.py",
+        "source": "GIT"
       },
       "existing_cluster_id": "0609-090345-4rjuomtp"
     },
@@ -29,7 +31,8 @@
         { "task_key": "train" }
       ],
       "spark_python_task": {
-        "python_file": "src/ml_pipelines/steps/evaluate.py"
+        "python_file": "src/ml_pipelines/steps/evaluate.py",
+        "source": "GIT"
       },
       "existing_cluster_id": "0609-090345-4rjuomtp"
     },
@@ -39,7 +42,8 @@
         { "task_key": "train" }
       ],
       "spark_python_task": {
-        "python_file": "src/ml_pipelines/steps/feature_importance.py"
+        "python_file": "src/ml_pipelines/steps/feature_importance.py",
+        "source": "GIT"
       },
       "existing_cluster_id": "0609-090345-4rjuomtp"
     },
@@ -49,7 +53,8 @@
         { "task_key": "train" }
       ],
       "spark_python_task": {
-        "python_file": "src/ml_pipelines/steps/model_qa.py"
+        "python_file": "src/ml_pipelines/steps/model_qa.py",
+        "source": "GIT"
       },
       "existing_cluster_id": "0609-090345-4rjuomtp"
     }

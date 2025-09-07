@@ -21,7 +21,7 @@ def run(cfg: DictConfig, model_data: Dict, data: Dict[str, pd.DataFrame]):
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg: DictConfig):
-    from . import prepare_data, train
+    from ml_pipelines.steps import prepare_data, train
 
     data = prepare_data.run(cfg)
     model_data = train.run(cfg, data)

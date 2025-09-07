@@ -50,7 +50,7 @@ def run(cfg: DictConfig, data: Dict[str, pd.DataFrame]):
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg: DictConfig):
-    from . import prepare_data
+    from ml_pipelines.steps import prepare_data
 
     data = prepare_data.run(cfg)
     run(cfg, data)

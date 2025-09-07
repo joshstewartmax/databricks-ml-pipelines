@@ -1,0 +1,53 @@
+jobs:
+  ml_pipeline_dev:
+    name: ml-pipeline-dev
+    experiment_name: "/Shared/dev_pipeline_experiment"
+    tasks:
+      - task_key: prepare_data
+        python_wheel_task:
+          package_name: databricks_ml_pipelines
+          entry_point: prepare-data
+        new_cluster:
+          spark_version: "<SPARK_VERSION>"
+          node_type_id: "<NODE_TYPE>"
+          num_workers: 1
+      - task_key: train
+        depends_on:
+          - task_key: prepare_data
+        python_wheel_task:
+          package_name: databricks_ml_pipelines
+          entry_point: train-model
+        new_cluster:
+          spark_version: "<SPARK_VERSION>"
+          node_type_id: "<NODE_TYPE>"
+          num_workers: 1
+      - task_key: evaluate
+        depends_on:
+          - task_key: train
+        python_wheel_task:
+          package_name: databricks_ml_pipelines
+          entry_point: evaluate-model
+        new_cluster:
+          spark_version: "<SPARK_VERSION>"
+          node_type_id: "<NODE_TYPE>"
+          num_workers: 1
+      - task_key: feature_importance
+        depends_on:
+          - task_key: train
+        python_wheel_task:
+          package_name: databricks_ml_pipelines
+          entry_point: feature-importance
+        new_cluster:
+          spark_version: "<SPARK_VERSION>"
+          node_type_id: "<NODE_TYPE>"
+          num_workers: 1
+      - task_key: model_qa
+        depends_on:
+          - task_key: train
+        python_wheel_task:
+          package_name: databricks_ml_pipelines
+          entry_point: model-qa
+        new_cluster:
+          spark_version: "<SPARK_VERSION>"
+          node_type_id: "<NODE_TYPE>"
+          num_workers: 1

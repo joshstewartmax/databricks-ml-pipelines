@@ -1,5 +1,7 @@
+# Databricks notebook source
 from __future__ import annotations
 
+# COMMAND ----------
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
@@ -7,7 +9,7 @@ import mlflow
 from omegaconf import DictConfig
 import hydra
 
-
+# COMMAND ----------
 def run(cfg: DictConfig):
     """Prepare data for training.
 
@@ -33,11 +35,11 @@ def run(cfg: DictConfig):
         mlflow.log_params({"train_rows": len(train_df), "test_rows": len(test_df)})
         return {"train": train_df.reset_index(drop=True), "test": test_df.reset_index(drop=True)}
 
-
+# COMMAND ----------
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg: DictConfig):
     run(cfg)
 
-
+# COMMAND ----------
 if __name__ == "__main__":  # pragma: no cover - script entry point
     main()

@@ -3,13 +3,13 @@
   "git_source": {
     "git_url": "https://github.com/joshstewartmax/databricks-ml-pipelines.git",
     "git_provider": "gitHub",
-    "git_branch": "codex/set-up-ml-pipeline-with-databricks-lakeflow"
+    "git_branch": "main"
   },
   "tasks": [
     {
       "task_key": "prepare_data",
-      "spark_python_task": {
-        "python_file": "src/ml_pipelines/steps/prepare_data.py",
+      "notebook_task": {
+        "notebook_path": "src/ml_pipelines/steps/prepare_data.py",
         "source": "GIT"
       },
       "existing_cluster_id": "0609-090345-4rjuomtp"

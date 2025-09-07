@@ -6,13 +6,14 @@ import mlflow
 from omegaconf import DictConfig
 import hydra
 import pandas as pd
+from mlflow.models import infer_signature
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_auc_score
 
 
 def run(cfg: DictConfig, data: Dict[str, pd.DataFrame]):
-    with mlflow.start_run(run_name="02_train", nested=True) as child_run:
+    with mlflow.start_run(run_name="02_train", nested=True):
         mlflow.set_tag("step", "train")
         train_df = data["train"]
         X = train_df.drop("label", axis=1)
@@ -33,20 +34,17 @@ def run(cfg: DictConfig, data: Dict[str, pd.DataFrame]):
         val_auc = roc_auc_score(y_val, val_probs)
         mlflow.log_metric("val_auc", val_auc)
         mlflow.log_params(search.best_params_)
-        mlflow.sklearn.log_model(best_model, "model")
-        try:
-            result = mlflow.register_model(
-                f"runs:/{child_run.info.run_id}/model",
-                cfg.get("model_registry_name", "ml_pipeline_model"),
-            )
-            mlflow.set_tags(
-                {
-                    "registered_model": cfg.get("model_registry_name", "ml_pipeline_model"),
-                    "model_version": result.version,
-                }
-            )
-        except Exception as e:  # registry may not be available locally
-            mlflow.log_text(str(e), "register_model_error.txt")
+        # Ensure float inputs to avoid integer column warnings in schema
+        input_example = X_tr.head(5).astype("float64")
+        signature = infer_signature(model_input=input_example, model_output=best_model.predict(input_example))
+
+
+        mlflow.sklearn.log_model(
+            best_model,
+            name="model",
+            input_example=input_example,
+            signature=signature,
+        )
         return {"model": best_model, "X_train": X_tr, "y_train": y_tr}
 
 

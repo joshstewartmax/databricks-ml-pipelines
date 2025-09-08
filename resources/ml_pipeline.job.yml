@@ -2,6 +2,9 @@ resources:
   jobs:
     ml_pipeline_dev:
       name: ml-pipeline-dev
+      permissions:
+        - group_name: DataScience-Read-Data
+          level: CAN_MANAGE
 
       tasks:
         - task_key: initialize

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import os
 
-import mlflow
 from omegaconf import DictConfig
 import hydra
 
@@ -17,7 +16,8 @@ from ml_pipelines.mlflow_utils import (
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg: DictConfig):
-    set_experiment_from_cfg(cfg)
+    exp_used = set_experiment_from_cfg(cfg)
+    print(f"[initialize] Experiment selected: {exp_used}")
 
     identifiers = get_databricks_run_identifiers()
     pipeline_run_id = generate_pipeline_run_id()
@@ -32,10 +32,12 @@ def main(cfg: DictConfig):
     }
 
     parent_run_id = create_parent_run(cfg, tags=tags)
+    print(f"[initialize] Created parent run_id: {parent_run_id}")
 
     # Persist for downstream tasks
     set_task_value("parent_run_id", parent_run_id)
     set_task_value("pipeline_run_id", pipeline_run_id)
+    print("[initialize] Stored task values: parent_run_id and pipeline_run_id")
 
     # Also expose via environment for non-Databricks debugging
     os.environ["MLFLOW_PARENT_RUN_ID"] = parent_run_id

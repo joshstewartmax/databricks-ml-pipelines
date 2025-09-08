@@ -1,5 +1,5 @@
 [project]
-name = "databricks-ml-pipelines"
+name = "databricks_ml_pipelines"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -8,7 +8,7 @@ dependencies = [
     "hydra-core>=1.3.2",
     "matplotlib>=3.10.6",
     "mlflow>=3.3.2",
-    "numpy>=2.3.2",
+    "numpy<2", # numpy >2 is not compatible with databricks runtime (eye roll)
     "pandas>=2.3.2",
     "scikit-learn>=1.7.1",
 ]

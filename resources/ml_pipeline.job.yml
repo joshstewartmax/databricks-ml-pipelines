@@ -1,0 +1,51 @@
+resources:
+  jobs:
+    ml_pipeline_dev:
+      name: ml-pipeline-dev
+
+      tasks:
+        - task_key: prepare_data
+          python_wheel_task:
+            package_name: databricks-ml-pipelines
+            entry_point: prepare-data
+          libraries:
+            - whl: ../dist/*.whl
+          existing_cluster_id: "0609-090345-4rjuomtp"
+        - task_key: train
+          depends_on:
+            - task_key: prepare_data
+          python_wheel_task:
+            package_name: databricks-ml-pipelines
+            entry_point: train-model
+          libraries:
+            - whl: ../dist/*.whl
+          existing_cluster_id: "0609-090345-4rjuomtp"
+        - task_key: evaluate
+          depends_on:
+            - task_key: train
+          python_wheel_task:
+            package_name: databricks-ml-pipelines
+            entry_point: evaluate-model
+          libraries:
+            - whl: ../dist/*.whl
+          existing_cluster_id: "0609-090345-4rjuomtp"
+        - task_key: feature_importance
+          depends_on:
+            - task_key: train
+          python_wheel_task:
+            package_name: databricks-ml-pipelines
+            entry_point: feature-importance
+          libraries:
+            - whl: ../dist/*.whl
+          existing_cluster_id: "0609-090345-4rjuomtp"
+        - task_key: model_qa
+          depends_on:
+            - task_key: train
+          python_wheel_task:
+            package_name: databricks-ml-pipelines
+            entry_point: model-qa
+          libraries:
+            - whl: ../dist/*.whl
+          existing_cluster_id: "0609-090345-4rjuomtp"
+
+

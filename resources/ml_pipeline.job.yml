@@ -4,10 +4,21 @@ resources:
       name: ml-pipeline-dev
 
       tasks:
+        - task_key: initialize
+          python_wheel_task:
+            package_name: databricks-ml-pipelines
+            entry_point: initialize-pipeline
+            parameters: ["experiment=${var.experiment}"]
+          libraries:
+            - whl: ../dist/*.whl
+          existing_cluster_id: "0609-090345-4rjuomtp"
         - task_key: prepare_data
+          depends_on:
+            - task_key: initialize
           python_wheel_task:
             package_name: databricks-ml-pipelines
             entry_point: prepare-data
+            parameters: ["experiment=${var.experiment}"]
           libraries:
             - whl: ../dist/*.whl
           existing_cluster_id: "0609-090345-4rjuomtp"
@@ -17,6 +28,7 @@ resources:
           python_wheel_task:
             package_name: databricks-ml-pipelines
             entry_point: train-model
+            parameters: ["experiment=${var.experiment}"]
           libraries:
             - whl: ../dist/*.whl
           existing_cluster_id: "0609-090345-4rjuomtp"
@@ -26,6 +38,7 @@ resources:
           python_wheel_task:
             package_name: databricks-ml-pipelines
             entry_point: evaluate-model
+            parameters: ["experiment=${var.experiment}"]
           libraries:
             - whl: ../dist/*.whl
           existing_cluster_id: "0609-090345-4rjuomtp"
@@ -35,6 +48,7 @@ resources:
           python_wheel_task:
             package_name: databricks-ml-pipelines
             entry_point: feature-importance
+            parameters: ["experiment=${var.experiment}"]
           libraries:
             - whl: ../dist/*.whl
           existing_cluster_id: "0609-090345-4rjuomtp"
@@ -44,6 +58,19 @@ resources:
           python_wheel_task:
             package_name: databricks-ml-pipelines
             entry_point: model-qa
+            parameters: ["experiment=${var.experiment}"]
+          libraries:
+            - whl: ../dist/*.whl
+          existing_cluster_id: "0609-090345-4rjuomtp"
+        - task_key: finalize
+          depends_on:
+            - task_key: model_qa
+            - task_key: evaluate
+            - task_key: feature_importance
+          python_wheel_task:
+            package_name: databricks-ml-pipelines
+            entry_point: finalize-pipeline
+            parameters: ["experiment=${var.experiment}"]
           libraries:
             - whl: ../dist/*.whl
           existing_cluster_id: "0609-090345-4rjuomtp"

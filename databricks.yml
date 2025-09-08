@@ -4,6 +4,11 @@ bundle:
   name: databricks_ml_pipelines
   uuid: d17309cf-6583-470f-9459-0e5c32551706
 
+variables:
+  experiment:
+    description: Hydra experiment config to select (dev/prod/local)
+    default: dev
+
 artifacts:
   python_artifact:
     type: whl
@@ -31,6 +36,9 @@ targets:
       # See https://docs.databricks.com/aws/en/dev-tools/bundles/settings
       artifacts_dynamic_version: true
 
+    variables:
+      experiment: dev
+
   prod:
     mode: production
     workspace:
@@ -40,3 +48,5 @@ targets:
     permissions:
       - user_name: j.stewart@codat.io
         level: CAN_MANAGE
+    variables:
+      experiment: prod

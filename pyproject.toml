@@ -20,6 +20,8 @@ train-model = "ml_pipelines.steps.train:main"
 evaluate-model = "ml_pipelines.steps.evaluate:main"
 feature-importance = "ml_pipelines.steps.feature_importance:main"
 model-qa = "ml_pipelines.steps.model_qa:main"
+initialize-pipeline = "ml_pipelines.steps.initialize_pipeline:main"
+finalize-pipeline = "ml_pipelines.steps.finalize_pipeline:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

@@ -11,9 +11,15 @@ from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_auc_score
 
+from ml_pipelines.mlflow_utils import set_experiment_from_cfg, get_task_value
 
 def run(cfg: DictConfig, data: Dict[str, pd.DataFrame]):
-    with mlflow.start_run(run_name="02_train", nested=True):
+    set_experiment_from_cfg(cfg)
+    parent_run_id = get_task_value("parent_run_id")
+    start_params = {"run_name": "02_train"}
+    if parent_run_id:
+        start_params["tags"] = {"mlflow.parentRunId": parent_run_id}
+    with mlflow.start_run(**start_params):
         mlflow.set_tag("step", "train")
         train_df = data["train"]
         X = train_df.drop("label", axis=1)

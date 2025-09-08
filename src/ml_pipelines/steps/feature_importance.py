@@ -8,9 +8,15 @@ import hydra
 import pandas as pd
 from sklearn.inspection import permutation_importance
 
+from ml_pipelines.mlflow_utils import set_experiment_from_cfg, get_task_value
 
 def run(cfg: DictConfig, model_data: Dict, data: Dict[str, pd.DataFrame]):
-    with mlflow.start_run(run_name="04_feature_importance", nested=True):
+    set_experiment_from_cfg(cfg)
+    parent_run_id = get_task_value("parent_run_id")
+    start_params = {"run_name": "04_feature_importance"}
+    if parent_run_id:
+        start_params["tags"] = {"mlflow.parentRunId": parent_run_id}
+    with mlflow.start_run(**start_params):
         mlflow.set_tag("step", "feature_importance")
         result = permutation_importance(
             model_data["model"],

@@ -9,9 +9,15 @@ import pandas as pd
 from sklearn.metrics import roc_auc_score, RocCurveDisplay
 import matplotlib.pyplot as plt
 
+from ml_pipelines.mlflow_utils import set_experiment_from_cfg, get_task_value
 
 def run(cfg: DictConfig, model_data: Dict, data: Dict[str, pd.DataFrame]):
-    with mlflow.start_run(run_name="03_evaluate", nested=True):
+    set_experiment_from_cfg(cfg)
+    parent_run_id = get_task_value("parent_run_id")
+    start_params = {"run_name": "03_evaluate"}
+    if parent_run_id:
+        start_params["tags"] = {"mlflow.parentRunId": parent_run_id}
+    with mlflow.start_run(**start_params):
         mlflow.set_tag("step", "evaluate")
         test_df = data["test"]
         X_test = test_df.drop("label", axis=1)

@@ -7,6 +7,7 @@ import mlflow
 from omegaconf import DictConfig
 import hydra
 
+from ml_pipelines.mlflow_utils import set_experiment_from_cfg, get_task_value
 
 def run(cfg: DictConfig):
     """Prepare data for training.
@@ -15,7 +16,13 @@ def run(cfg: DictConfig):
     workflow, we generate a small random dataset that mimics the
     expected schema.
     """
-    with mlflow.start_run(run_name="01_prepare_data", nested=True) as run:
+    # Ensure experiment exists/selected when running as a job task
+    set_experiment_from_cfg(cfg)
+    parent_run_id = get_task_value("parent_run_id")
+    parent_params = {"run_name": "01_prepare_data"}
+    if parent_run_id:
+        parent_params["tags"] = {"mlflow.parentRunId": parent_run_id}
+    with mlflow.start_run(**parent_params):
         mlflow.set_tag("step", "prepare_data")
         # stub dataset: two numerical features and a binary label
         data = pd.DataFrame(

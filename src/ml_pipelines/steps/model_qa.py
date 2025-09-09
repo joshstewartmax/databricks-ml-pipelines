@@ -5,7 +5,7 @@ from omegaconf import DictConfig
 import hydra
 
 from ml_pipelines.util.mlflow import end_pipeline_run
-from ml_pipelines.util.task_store import TaskStore, DatabricksTaskStore
+from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
 from ml_pipelines.util.runner import run_step
 
 
@@ -15,7 +15,7 @@ def run(cfg: DictConfig):
     return {}
 
 
-def get_step_inputs(store: TaskStore, cfg: DictConfig):
+def get_step_inputs(task_values: TaskValues, cfg: DictConfig):
     return {}
 
 
@@ -23,14 +23,14 @@ def get_step_inputs(store: TaskStore, cfg: DictConfig):
 def main(cfg: DictConfig):
     mlflow.set_experiment(cfg.experiment.name)
 
-    store = DatabricksTaskStore()
-    pipeline_run_id = store.get(key="pipeline_run_id", task_key="prepare_data")
+    task_values = DatabricksTaskValues()
+    pipeline_run_id = task_values.get(key="pipeline_run_id", task_key="prepare_data")
     
-    step_inputs = get_step_inputs(store, cfg)
+    step_inputs = get_step_inputs(task_values, cfg)
     run_step(
         cfg,
         step_key="model_qa",
-        task_store=store,
+        task_values=task_values,
         step_func=run,
         parent_run_id=pipeline_run_id,
         step_inputs=step_inputs,

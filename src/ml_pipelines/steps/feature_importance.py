@@ -7,7 +7,7 @@ import pandas as pd
 from sklearn.inspection import permutation_importance
 
 from ml_pipelines.util.mlflow import load_parquet_artifact_as_df
-from ml_pipelines.util.task_store import TaskStore, DatabricksTaskStore
+from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
 from ml_pipelines.util.runner import run_step
 
 
@@ -24,10 +24,10 @@ def run(cfg: DictConfig, model, X_train: pd.DataFrame, y_train: pd.DataFrame):
     return importances
 
 
-def get_step_inputs(store: TaskStore, cfg: DictConfig):
-    train_run_id = store.get(key="train_run_id", task_key="train")
+def get_step_inputs(task_values: TaskValues, cfg: DictConfig):
+    train_run_id = task_values.get(key="train_run_id", task_key="train")
     if train_run_id is None:
-        train_run_id = store.get(key="train_run_id")
+        train_run_id = task_values.get(key="train_run_id")
     model = mlflow.sklearn.load_model(f"runs:/{train_run_id}/model")
     X_train = load_parquet_artifact_as_df(train_run_id, "train/X_train.parquet")
     y_train = load_parquet_artifact_as_df(train_run_id, "train/y_train.parquet")
@@ -38,14 +38,14 @@ def get_step_inputs(store: TaskStore, cfg: DictConfig):
 def main(cfg: DictConfig):
     mlflow.set_experiment(cfg.experiment.name)
 
-    store = DatabricksTaskStore()
-    pipeline_run_id = store.get(key="pipeline_run_id", task_key="prepare_data")
+    task_values = DatabricksTaskValues()
+    pipeline_run_id = task_values.get(key="pipeline_run_id", task_key="prepare_data")
     
-    step_inputs = get_step_inputs(store, cfg)
+    step_inputs = get_step_inputs(task_values, cfg)
     run_step(
         cfg,
         step_key="feature_importance",
-        task_store=store,
+        task_values=task_values,
         step_func=run,
         parent_run_id=pipeline_run_id,
         step_inputs=step_inputs,

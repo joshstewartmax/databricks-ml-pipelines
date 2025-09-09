@@ -5,7 +5,7 @@ from typing import Callable, Dict, Optional, TypeVar, Any
 import mlflow
 from omegaconf import DictConfig, OmegaConf
 
-from .task_store import TaskStore
+from .task_values import TaskValues
 
 
 T = TypeVar("T")
@@ -14,7 +14,7 @@ T = TypeVar("T")
 def run_step(
     cfg: DictConfig,
     step_key: str,
-    task_store: TaskStore,
+    task_values: TaskValues,
     step_func: Callable[..., T],
     parent_run_id: Optional[str] = None,
     tags: Optional[Dict[str, str]] = None,
@@ -49,7 +49,7 @@ def run_step(
 
         current_run = mlflow.active_run()
         if current_run is not None:
-            task_store.set(key=f"{step_key}_run_id", value=current_run.info.run_id)
+            task_values.set(key=f"{step_key}_run_id", value=current_run.info.run_id)
             
         return result
 

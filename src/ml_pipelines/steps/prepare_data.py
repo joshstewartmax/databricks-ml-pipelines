@@ -8,7 +8,7 @@ from omegaconf import DictConfig
 import hydra
 
 from ml_pipelines.util.mlflow import save_dataframe_as_artifact, begin_pipeline_run
-from ml_pipelines.util.task_store import DatabricksTaskStore
+from ml_pipelines.util.task_values import DatabricksTaskValues
 from ml_pipelines.util.runner import run_step
 
 
@@ -35,14 +35,14 @@ def run(cfg: DictConfig):
 def main(cfg: DictConfig):
     mlflow.set_experiment(cfg.experiment.name)
     
-    store = DatabricksTaskStore()
+    task_values = DatabricksTaskValues()
     pipeline_run_id = begin_pipeline_run(cfg)
-    store.set(key="pipeline_run_id", value=pipeline_run_id)
+    task_values.set(key="pipeline_run_id", value=pipeline_run_id)
 
     run_step(
         cfg,
         step_key="prepare_data",
-        task_store=store,
+        task_values=task_values,
         step_func=run,
         parent_run_id=pipeline_run_id,
     )

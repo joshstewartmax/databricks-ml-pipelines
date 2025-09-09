@@ -3,11 +3,10 @@ from __future__ import annotations
 from typing import Dict, Optional, Any
 
 
-class TaskStore:
-    """Abstract key-value store for passing small values across steps.
-
-    Keys are namespaced by an optional task_key (producer step/task identifier)
-    to support cross-task lookups on Databricks and local runs.
+class TaskValues:
+    """
+    Base class for interacting with Databricks task values so we can create a 
+    single abstraction for pipeline runs locally and on Databricks.
     """
 
     def set(self, key: str, value: Any, task_key: Optional[str] = None) -> None:
@@ -17,7 +16,7 @@ class TaskStore:
         raise NotImplementedError
 
 
-class LocalTaskStore(TaskStore):
+class LocalTaskValues(TaskValues):
     """In-memory implementation suitable for local pipeline runs."""
 
     def __init__(self) -> None:
@@ -34,7 +33,7 @@ class LocalTaskStore(TaskStore):
         return self._store.get(namespace, {}).get(key)
 
 
-class DatabricksTaskStore(TaskStore):
+class DatabricksTaskValues(TaskValues):
     """Databricks implementation backed by dbutils.jobs.taskValues."""
 
     def __init__(self) -> None:

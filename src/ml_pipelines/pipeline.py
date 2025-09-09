@@ -4,10 +4,10 @@ import mlflow
 from omegaconf import DictConfig
 import hydra
 
-from .steps import prepare_data, train, evaluate, feature_importance, model_qa
-from .util.runner import run_step
-from .util.task_values import LocalTaskValues
-from .util.mlflow import begin_pipeline_run
+from ml_pipelines.steps import prepare_data, train, evaluate, feature_importance, model_qa
+from ml_pipelines.util.runner import run_step
+from ml_pipelines.util.task_values import LocalTaskValues
+from ml_pipelines.util.mlflow import begin_pipeline_run
 
 
 @hydra.main(version_base=None, config_path="conf", config_name="config")

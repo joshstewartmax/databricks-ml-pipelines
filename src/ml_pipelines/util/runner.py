@@ -5,7 +5,7 @@ from typing import Callable, Dict, Optional, TypeVar, Any
 import mlflow
 from omegaconf import DictConfig, OmegaConf
 
-from .task_values import TaskValues
+from ml_pipelines.util.task_values import TaskValues
 
 
 T = TypeVar("T")

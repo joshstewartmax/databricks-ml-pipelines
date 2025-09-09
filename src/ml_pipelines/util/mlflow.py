@@ -47,7 +47,19 @@ def log_input_dataset(df: pd.DataFrame, name: str) -> None:
     source_artifact = df.attrs.get("source_artifact")
 
     dataset_name = str(source_artifact) if source_artifact else name
-    dataset = mlflow.data.from_pandas(df, name=dataset_name)
+    
+    # Upcast only integer-like columns to float64 to avoid mlflow warnings
+    int_to_float_map = {
+        col: "float64"
+        for col in df.columns
+        if pd.api.types.is_integer_dtype(df[col])
+    }
+    if int_to_float_map:
+        df_for_logging = df.astype(int_to_float_map, copy=False)
+    else:
+        df_for_logging = df
+
+    dataset = mlflow.data.from_pandas(df_for_logging, name=dataset_name)
 
     mlflow.log_input(dataset)
 

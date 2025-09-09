@@ -26,9 +26,18 @@ def run(cfg: DictConfig):
         test_size=cfg.steps.prepare_data.test_size,
         random_state=cfg.seed,
     )
+    
     mlflow.log_params({"train_rows": len(train_df), "test_rows": len(test_df)})
-    save_dataframe_as_artifact(train_df.reset_index(drop=True), "train.parquet", artifact_subdir="prepare_data")
-    save_dataframe_as_artifact(test_df.reset_index(drop=True), "test.parquet", artifact_subdir="prepare_data")
+    save_dataframe_as_artifact(
+        train_df.reset_index(drop=True), 
+        "train.parquet", 
+        artifact_subdir="prepare_data"
+    )
+    save_dataframe_as_artifact(
+        test_df.reset_index(drop=True), 
+        "test.parquet", 
+        artifact_subdir="prepare_data"
+    )
     return {"train": train_df.reset_index(drop=True), "test": test_df.reset_index(drop=True)}
 
 

@@ -7,7 +7,7 @@ import mlflow
 from omegaconf import DictConfig
 import hydra
 
-from ml_pipelines.util.mlflow import save_dataframe_as_artifact, begin_pipeline_run
+from ml_pipelines.util.mlflow import save_dataframe_as_artifact, begin_pipeline_run, log_input_dataset
 from ml_pipelines.util.task_values import DatabricksTaskValues
 from ml_pipelines.util.runner import run_step
 
@@ -18,6 +18,8 @@ def run(cfg: DictConfig):
         "feature2": np.random.randn(100),
         "label": np.random.randint(0, 2, 100),
     })
+
+    log_input_dataset(data, name="data")
 
     train_df, test_df = train_test_split(
         data,

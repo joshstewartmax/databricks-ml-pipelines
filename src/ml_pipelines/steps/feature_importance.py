@@ -6,12 +6,15 @@ import hydra
 import pandas as pd
 from sklearn.inspection import permutation_importance
 
-from ml_pipelines.util.mlflow import load_parquet_artifact_as_df
+from ml_pipelines.util.mlflow import load_parquet_artifact_as_df, log_input_dataset
 from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
 from ml_pipelines.util.runner import run_step
 
 
 def run(cfg: DictConfig, model, X_train: pd.DataFrame, y_train: pd.DataFrame):
+    log_input_dataset(X_train, name="X_train")
+    log_input_dataset(y_train.to_frame(name="label") if not isinstance(y_train, pd.DataFrame) else y_train, name="y_train")
+
     result = permutation_importance(
         model,
         X_train,

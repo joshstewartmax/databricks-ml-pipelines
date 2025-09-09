@@ -7,12 +7,14 @@ import pandas as pd
 from sklearn.metrics import roc_auc_score, RocCurveDisplay
 import matplotlib.pyplot as plt
 
-from ml_pipelines.util.mlflow import load_parquet_artifact_as_df
+from ml_pipelines.util.mlflow import load_parquet_artifact_as_df, log_input_dataset
 from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
 from ml_pipelines.util.runner import run_step
 
 
 def run(cfg: DictConfig, model, test_df: pd.DataFrame):
+    log_input_dataset(test_df, name="test_df")
+
     X_test = test_df.drop("label", axis=1)
     y_test = test_df["label"]
     probs = model.predict_proba(X_test)[:, 1]

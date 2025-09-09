@@ -38,12 +38,16 @@ def load_parquet_artifact_as_df(run_id: str, artifact_rel_path: str) -> pd.DataF
     """Download a parquet artifact and load it as a DataFrame."""
     client = MlflowClient()
     artifact_path = client.download_artifacts(run_id, artifact_rel_path)
-    # If artifact_rel_path is a file path, download_artifact may return the file path; handle both dir/file
-    if os.path.isdir(artifact_path):
-        # take first parquet file in directory
-        for name in os.listdir(artifact_path):
-            if name.endswith(".parquet"):
-                return pd.read_parquet(os.path.join(artifact_path, name))
-        raise FileNotFoundError(f"No parquet file found in {artifact_path}")
-    return pd.read_parquet(artifact_path)
+    df = pd.read_parquet(artifact_path)
+    df.attrs["source_artifact"] = artifact_rel_path
+    return df
+
+
+def log_input_dataset(df: pd.DataFrame, name: str) -> None:
+    source_artifact = df.attrs.get("source_artifact")
+
+    dataset_name = str(source_artifact) if source_artifact else name
+    dataset = mlflow.data.from_pandas(df, name=dataset_name)
+
+    mlflow.log_input(dataset)
 

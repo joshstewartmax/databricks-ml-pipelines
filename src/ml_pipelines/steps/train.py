@@ -12,12 +12,15 @@ from sklearn.metrics import roc_auc_score
 from ml_pipelines.util.mlflow import (
     load_parquet_artifact_as_df,
     save_dataframe_as_artifact,
+    log_input_dataset,
 )
 from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
 from ml_pipelines.util.runner import run_step
 
 
 def run(cfg: DictConfig, train_df: pd.DataFrame):
+    log_input_dataset(train_df, name="train_df")
+
     X = train_df.drop("label", axis=1)
     y = train_df["label"]
 

@@ -6,15 +6,20 @@ seed: 42
 
 steps:
   prepare_data:
+    step_name: "01_prepare_data"
     test_size: 0.2
   train:
+    step_name: "02_train"
     val_size: 0.2
     model_params:
       n_estimators: 50
       random_state: ${seed}
-  evaluate: {}
+  evaluate: 
+    step_name: "03_evaluate"
   feature_importance:
+    step_name: "04_feature_importance"
     n_repeats: 5
   model_qa:
+    step_name: "05_model_qa"
     prod_model_uri: "models:/MyModel/Production"  # Placeholder
 

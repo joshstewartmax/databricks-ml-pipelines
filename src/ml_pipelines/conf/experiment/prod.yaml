@@ -1,2 +1,1 @@
-name: prod_pipeline_experiment
-path: /Shared/ml-pipelines-prod
+name: /Shared/ml-pipelines-prod

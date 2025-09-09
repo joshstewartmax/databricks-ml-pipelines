@@ -17,11 +17,11 @@ from ml_pipelines.util.databricks import get_dbutils
 
 dbutils = get_dbutils()
 
-def train(cfg: DictConfig, parent_run_id: str, train_df: pd.DataFrame):
+def train(cfg: DictConfig, pipeline_run_id: str, train_df: pd.DataFrame):
     with mlflow.start_run(
         run_name=cfg.steps.train.step_name,
         nested=True,
-        parent_run_id=parent_run_id,
+        parent_run_id=pipeline_run_id,
     ):
         mlflow.set_tag("step", "train")
 
@@ -72,12 +72,12 @@ def train(cfg: DictConfig, parent_run_id: str, train_df: pd.DataFrame):
 def main(cfg: DictConfig):
     mlflow.set_experiment(cfg.experiment.name)
 
-    parent_run_id = dbutils.jobs.taskValues.get(key="parent_run_id", taskKey="initialize")
+    pipeline_run_id = dbutils.jobs.taskValues.get(key="pipeline_run_id", taskKey="prepare_data")
     prep_run_id = dbutils.jobs.taskValues.get(key="prepare_run_id", taskKey="prepare_data")
     
     train_df = load_parquet_artifact_as_df(prep_run_id, "prepare_data/train.parquet")
 
-    train(cfg, parent_run_id, train_df)
+    train(cfg, pipeline_run_id, train_df)
 
 
 if __name__ == "__main__":  # pragma: no cover

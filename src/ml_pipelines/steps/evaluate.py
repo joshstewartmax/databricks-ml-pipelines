@@ -29,11 +29,11 @@ def load_previous_artifacts_for_evaluate(model_data: Dict | None, data: Dict[str
     return model, test_df
 
 
-def evaluate(cfg: DictConfig, parent_run_id: str, model, test_df: pd.DataFrame):
+def evaluate(cfg: DictConfig, pipeline_run_id: str, model, test_df: pd.DataFrame):
     with mlflow.start_run(
         run_name=cfg.steps.evaluate.step_name,
         nested=True,
-        parent_run_id=parent_run_id,
+        parent_run_id=pipeline_run_id,
     ):
         mlflow.set_tag("step", "evaluate")
         X_test = test_df.drop("label", axis=1)
@@ -51,9 +51,9 @@ def evaluate(cfg: DictConfig, parent_run_id: str, model, test_df: pd.DataFrame):
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg: DictConfig):
     mlflow.set_experiment(cfg.experiment.name)
-    parent_run_id = dbutils.jobs.taskValues.get(key="parent_run_id", taskKey="initialize")
+    pipeline_run_id = dbutils.jobs.taskValues.get(key="pipeline_run_id", taskKey="prepare_data")
     model, test_df = load_previous_artifacts_for_evaluate(None, None)
-    evaluate(cfg, parent_run_id, model, test_df)
+    evaluate(cfg, pipeline_run_id, model, test_df)
 
 
 if __name__ == "__main__":  # pragma: no cover

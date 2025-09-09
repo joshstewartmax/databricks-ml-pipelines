@@ -8,7 +8,7 @@ from omegaconf import DictConfig
 import hydra
 
 from ml_pipelines.util.databricks import get_dbutils
-from ml_pipelines.util.mlflow import save_dataframe_as_artifact
+from ml_pipelines.util.mlflow import save_dataframe_as_artifact, begin_pipeline_run
 
 
 dbutils = get_dbutils()
@@ -42,8 +42,10 @@ def prepare_data(cfg: DictConfig, parent_run_id: str):
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg: DictConfig):
     mlflow.set_experiment(cfg.experiment.name)
-    parent_run_id = dbutils.jobs.taskValues.get(key="parent_run_id", taskKey="initialize")
-    prepare_data(cfg, parent_run_id)
+    pipeline_run_id = begin_pipeline_run(cfg)
+    dbutils.jobs.taskValues.set(key="pipeline_run_id", value=pipeline_run_id)
+
+    prepare_data(cfg, pipeline_run_id)
 
 
 if __name__ == "__main__":  # pragma: no cover - script entry point

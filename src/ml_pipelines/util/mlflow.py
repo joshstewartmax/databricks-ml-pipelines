@@ -4,8 +4,26 @@ import os
 
 import mlflow
 from mlflow.tracking import MlflowClient
+from omegaconf import DictConfig
 import tempfile
 import pandas as pd
+
+def begin_pipeline_run(cfg: DictConfig) -> str:
+    exp = mlflow.get_experiment_by_name(cfg.experiment.name)
+    client = MlflowClient()
+    run = client.create_run(
+        experiment_id=exp.experiment_id,
+        run_name="pipeline_run",
+        tags={},
+    )
+
+    return run.info.run_id
+
+
+def end_pipeline_run(parent_run_id: str, status: str = "FINISHED") -> None:
+    """Mark the MLflow parent run as terminated with the given status."""
+    client = MlflowClient()
+    client.set_terminated(run_id=parent_run_id, status=status)
 
 
 def save_dataframe_as_artifact(df: pd.DataFrame, filename: str, artifact_subdir: str) -> None:

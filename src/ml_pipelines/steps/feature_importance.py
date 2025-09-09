@@ -27,11 +27,11 @@ def load_previous_artifacts_for_feature_importance(model_data: Dict | None, data
     return model, X_train, y_train
 
 
-def feature_importance(cfg: DictConfig, parent_run_id: str, model, X_train: pd.DataFrame, y_train: pd.DataFrame):
+def feature_importance(cfg: DictConfig, pipeline_run_id: str, model, X_train: pd.DataFrame, y_train: pd.DataFrame):
     with mlflow.start_run(
         run_name=cfg.steps.feature_importance.step_name,
         nested=True,
-        parent_run_id=parent_run_id,
+        parent_run_id=pipeline_run_id,
     ):
         mlflow.set_tag("step", "feature_importance")
         result = permutation_importance(
@@ -49,9 +49,9 @@ def feature_importance(cfg: DictConfig, parent_run_id: str, model, X_train: pd.D
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg: DictConfig):
     mlflow.set_experiment(cfg.experiment.name)
-    parent_run_id = dbutils.jobs.taskValues.get(key="parent_run_id", taskKey="initialize")
+    pipeline_run_id = dbutils.jobs.taskValues.get(key="pipeline_run_id", taskKey="prepare_data")
     model, X_train, y_train = load_previous_artifacts_for_feature_importance(None, None)
-    feature_importance(cfg, parent_run_id, model, X_train, y_train)
+    feature_importance(cfg, pipeline_run_id, model, X_train, y_train)
 
 
 if __name__ == "__main__":  # pragma: no cover

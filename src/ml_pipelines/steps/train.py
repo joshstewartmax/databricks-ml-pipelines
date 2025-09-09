@@ -11,73 +11,75 @@ from sklearn.metrics import roc_auc_score
 
 from ml_pipelines.util.mlflow import (
     load_parquet_artifact_as_df,
+    save_dataframe_as_artifact,
 )
-from ml_pipelines.util.databricks import get_dbutils
+from ml_pipelines.util.task_store import TaskStore, DatabricksTaskStore
+from ml_pipelines.util.runner import run_step
 
 
-dbutils = get_dbutils()
+def run(cfg: DictConfig, train_df: pd.DataFrame):
+    X = train_df.drop("label", axis=1)
+    y = train_df["label"]
 
-def train(cfg: DictConfig, pipeline_run_id: str, train_df: pd.DataFrame):
-    with mlflow.start_run(
-        run_name=cfg.steps.train.step_name,
-        nested=True,
-        parent_run_id=pipeline_run_id,
-    ):
-        mlflow.set_tag("step", "train")
+    X_tr, X_val, y_tr, y_val = train_test_split(
+        X, y, test_size=cfg.steps.train.val_size, random_state=cfg.seed
+    )
 
-        X = train_df.drop("label", axis=1)
-        y = train_df["label"]
+    param_grid = {"n_estimators": [50, 100], "max_depth": [None, 5]}
+    search = GridSearchCV(
+        RandomForestClassifier(random_state=cfg.seed),
+        param_grid,
+        cv=3,
+        n_jobs=-1,
+    )
 
-        X_tr, X_val, y_tr, y_val = train_test_split(
-            X, y, test_size=cfg.steps.train.val_size, random_state=cfg.seed
-        )
+    search.fit(X_tr, y_tr)
+    best_model = search.best_estimator_
+    val_probs = best_model.predict_proba(X_val)[:, 1]
+    val_auc = roc_auc_score(y_val, val_probs)
 
-        param_grid = {"n_estimators": [50, 100], "max_depth": [None, 5]}
-        search = GridSearchCV(
-            RandomForestClassifier(random_state=cfg.seed),
-            param_grid,
-            cv=3,
-            n_jobs=-1,
-        )
+    mlflow.log_metric("val_auc", val_auc)
+    mlflow.log_params(search.best_params_)
 
-        search.fit(X_tr, y_tr)
-        best_model = search.best_estimator_
-        val_probs = best_model.predict_proba(X_val)[:, 1]
-        val_auc = roc_auc_score(y_val, val_probs)
+    input_example = X_tr.head(5).astype("float64")
+    signature = infer_signature(model_input=input_example, model_output=best_model.predict(input_example))
+    mlflow.sklearn.log_model(
+        best_model,
+        name="model",
+        input_example=input_example,
+        signature=signature,
+    )
 
-        mlflow.log_metric("val_auc", val_auc)
-        mlflow.log_params(search.best_params_)
+    save_dataframe_as_artifact(X_tr.reset_index(drop=True), "X_train.parquet", artifact_subdir="train")
+    save_dataframe_as_artifact(y_tr.to_frame(name="label").reset_index(drop=True), "y_train.parquet", artifact_subdir="train")
 
-        input_example = X_tr.head(5).astype("float64")
-        signature = infer_signature(model_input=input_example, model_output=best_model.predict(input_example))
-        mlflow.sklearn.log_model(
-            best_model,
-            name="model",
-            input_example=input_example,
-            signature=signature,
-        )
+    return {"model": best_model, "X_train": X_tr, "y_train": y_tr}
 
-        X_tr.to_parquet("X_train.parquet", index=False)
-        y_tr.to_frame(name="label").to_parquet("y_train.parquet", index=False)
-        mlflow.log_artifact("X_train.parquet", artifact_path="train")
-        mlflow.log_artifact("y_train.parquet", artifact_path="train")
 
-        current_run_id = mlflow.active_run().info.run_id
-        dbutils.jobs.taskValues.set(key="train_run_id", value=current_run_id)
-
-        return {"model": best_model, "X_train": X_tr, "y_train": y_tr}
+def get_step_inputs(store: TaskStore, cfg: DictConfig):
+    prep_run_id = store.get(key="prepare_data_run_id", task_key="prepare_data")
+    if prep_run_id is None:
+        prep_run_id = store.get(key="prepare_data_run_id")
+    train_df = load_parquet_artifact_as_df(prep_run_id, "prepare_data/train.parquet")
+    return {"train_df": train_df}
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg: DictConfig):
     mlflow.set_experiment(cfg.experiment.name)
-
-    pipeline_run_id = dbutils.jobs.taskValues.get(key="pipeline_run_id", taskKey="prepare_data")
-    prep_run_id = dbutils.jobs.taskValues.get(key="prepare_run_id", taskKey="prepare_data")
     
-    train_df = load_parquet_artifact_as_df(prep_run_id, "prepare_data/train.parquet")
+    store = DatabricksTaskStore()
+    pipeline_run_id = store.get(key="pipeline_run_id", task_key="prepare_data")
 
-    train(cfg, pipeline_run_id, train_df)
+    step_inputs = get_step_inputs(store, cfg)
+    run_step(
+        cfg,
+        step_key="train",
+        task_store=store,
+        step_func=run,
+        parent_run_id=pipeline_run_id,
+        step_inputs=step_inputs,
+    )
 
 
 if __name__ == "__main__":  # pragma: no cover

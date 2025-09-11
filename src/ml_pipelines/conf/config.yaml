@@ -29,3 +29,6 @@ steps:
     step_name: "05_model_qa"
     prod_model_uri: "models:/MyModel/Production" 
 
+mlflow:
+  log_datasets: true
+

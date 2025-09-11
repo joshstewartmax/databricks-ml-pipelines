@@ -45,7 +45,7 @@ def run_step(
         step_cfg_dict = OmegaConf.to_container(step_cfg, resolve=True)  # type: ignore[arg-type]
         mlflow.log_dict(step_cfg_dict, "config.json")
 
-        result: T = step_func(cfg, **step_inputs)
+        result: T = step_func(cfg, task_values, **step_inputs)
 
         current_run = mlflow.active_run()
         if current_run is not None:

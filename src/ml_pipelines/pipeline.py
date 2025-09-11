@@ -22,21 +22,16 @@ def main(cfg: DictConfig):
     with mlflow.start_run(run_id=pipeline_run_id):
         task_values.set(key="pipeline_run_id", value=pipeline_run_id, task_key="prepare_data")
 
-        prep_result = run_step(
+        run_step(
             cfg,
             step_key="prepare_data",
             task_values=task_values,
             step_func=prepare_data.run,
             parent_run_id=pipeline_run_id,
         )
-        if isinstance(prep_result, dict):
-            if "train_uri" in prep_result:
-                task_values.set(key="train_uri", value=prep_result["train_uri"], task_key="prepare_data")
-            if "test_uri" in prep_result:
-                task_values.set(key="test_uri", value=prep_result["test_uri"], task_key="prepare_data")
 
         train_inputs = train.get_step_inputs(task_values, cfg)
-        train_result = run_step(
+        run_step(
             cfg,
             step_key="train",
             task_values=task_values,
@@ -44,11 +39,6 @@ def main(cfg: DictConfig):
             parent_run_id=pipeline_run_id,
             step_inputs=train_inputs,
         )
-        if isinstance(train_result, dict):
-            if "X_train_uri" in train_result:
-                task_values.set(key="X_train_uri", value=train_result["X_train_uri"], task_key="train")
-            if "y_train_uri" in train_result:
-                task_values.set(key="y_train_uri", value=train_result["y_train_uri"], task_key="train")
         evaluate_inputs = evaluate.get_step_inputs(task_values, cfg)
         run_step(
             cfg,

@@ -11,7 +11,7 @@ from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
 from ml_pipelines.util.runner import run_step
 
 
-def run(cfg: DictConfig, model, test_uri: str):
+def run(cfg: DictConfig, task_values: TaskValues, model, test_uri: str):
     test_pl = pl.scan_delta(test_uri).collect()
     test_df = test_pl.to_pandas()
     X_test = test_df.drop("label", axis=1)
@@ -23,6 +23,7 @@ def run(cfg: DictConfig, model, test_uri: str):
     fig = disp.figure_
     mlflow.log_figure(fig, "roc_curve.png")
     plt.close(fig)
+    task_values.set(key="test_auc", value=auc, task_key="evaluate")
     return {"test_auc": auc}
 
 
@@ -47,7 +48,7 @@ def main(cfg: DictConfig):
     pipeline_run_id = task_values.get(key="pipeline_run_id", task_key="prepare_data")
     
     step_inputs = get_step_inputs(task_values, cfg)
-    result = run_step(
+    run_step(
         cfg,
         step_key="evaluate",
         task_values=task_values,

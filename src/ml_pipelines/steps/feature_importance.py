@@ -10,7 +10,7 @@ from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
 from ml_pipelines.util.runner import run_step
 
 
-def run(cfg: DictConfig, model, X_uri: str, Y_uri: str):
+def run(cfg: DictConfig, task_values: TaskValues, model, X_uri: str, Y_uri: str):
     X_pl = pl.scan_delta(X_uri).collect()
     y_pl = pl.scan_delta(Y_uri).collect()
     X_train = X_pl.to_pandas()
@@ -25,6 +25,7 @@ def run(cfg: DictConfig, model, X_uri: str, Y_uri: str):
     )
     importances = {col: imp for col, imp in zip(X_train.columns, result.importances_mean)}
     mlflow.log_dict(importances, "feature_importance.json")
+    task_values.set(key="feature_importance_logged", value=True, task_key="feature_importance")
     return importances
 
 
@@ -46,7 +47,7 @@ def main(cfg: DictConfig):
     pipeline_run_id = task_values.get(key="pipeline_run_id", task_key="prepare_data")
     
     step_inputs = get_step_inputs(task_values, cfg)
-    result = run_step(
+    run_step(
         cfg,
         step_key="feature_importance",
         task_values=task_values,

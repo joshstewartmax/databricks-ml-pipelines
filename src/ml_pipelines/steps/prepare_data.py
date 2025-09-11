@@ -7,12 +7,12 @@ from pyspark.sql import SparkSession
 import pyspark.sql.functions as F
 
 from ml_pipelines.util.mlflow import begin_pipeline_run
-from ml_pipelines.util.task_values import DatabricksTaskValues
+from ml_pipelines.util.task_values import DatabricksTaskValues, TaskValues
 from ml_pipelines.util.runner import run_step
 from ml_pipelines.util.delta_paths import build_delta_path
 
 
-def run(cfg: DictConfig):
+def run(cfg: DictConfig, task_values: TaskValues):
     env_name = getattr(cfg.experiment, "env_name", "local")
     if env_name == "local":
         # Configure Spark with Delta Lake for local runs
@@ -47,7 +47,9 @@ def run(cfg: DictConfig):
     train_df.write.format("delta").mode("overwrite").save(train_uri)
     test_df.write.format("delta").mode("overwrite").save(test_uri)
 
-    # return uris for orchestration to persist
+    # persist URIs directly to task values for downstream steps
+    task_values.set(key="train_uri", value=train_uri, task_key="prepare_data")
+    task_values.set(key="test_uri", value=test_uri, task_key="prepare_data")
     return {"train_uri": train_uri, "test_uri": test_uri}
 
 

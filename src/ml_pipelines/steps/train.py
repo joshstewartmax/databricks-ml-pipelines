@@ -14,7 +14,7 @@ from ml_pipelines.util.runner import run_step
 from ml_pipelines.util.delta_paths import build_delta_path
 
 
-def run(cfg: DictConfig, train_uri: str):
+def run(cfg: DictConfig, task_values: TaskValues, train_uri: str):
     train_pl = pl.scan_delta(train_uri).collect()
     train_df = train_pl.to_pandas()
 
@@ -74,7 +74,7 @@ def main(cfg: DictConfig):
     pipeline_run_id = task_values.get(key="pipeline_run_id", task_key="prepare_data")
 
     step_inputs = get_step_inputs(task_values, cfg)
-    result = run_step(
+    run_step(
         cfg,
         step_key="train",
         task_values=task_values,
@@ -82,12 +82,6 @@ def main(cfg: DictConfig):
         parent_run_id=pipeline_run_id,
         step_inputs=step_inputs,
     )
-    if isinstance(result, dict):
-        if "X_train_uri" in result:
-            task_values.set(key="X_train_uri", value=result["X_train_uri"])
-        if "y_train_uri" in result:
-            task_values.set(key="y_train_uri", value=result["y_train_uri"])
-    # no additional task values to persist except what run() handles for downstream
 
 
 if __name__ == "__main__":  # pragma: no cover

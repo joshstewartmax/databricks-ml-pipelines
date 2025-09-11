@@ -9,9 +9,10 @@ from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
 from ml_pipelines.util.runner import run_step
 
 
-def run(cfg: DictConfig):
+def run(cfg: DictConfig, task_values: TaskValues):
     mlflow.log_param("prod_model_uri", cfg.steps.model_qa.prod_model_uri)
     mlflow.log_metric("qa_placeholder", 1.0)
+    task_values.set(key="qa_complete", value=True, task_key="model_qa")
     return {}
 
 

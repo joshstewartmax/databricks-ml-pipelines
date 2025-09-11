@@ -4,6 +4,14 @@ defaults:
 
 seed: 42
 
+experiment:
+  env_name: local
+
+data:
+  delta_prefix:
+    local: ".data/delta"
+    databricks: "/Volumes/ml_artifacts"
+
 steps:
   prepare_data:
     step_name: "01_prepare_data"
@@ -21,5 +29,5 @@ steps:
     n_repeats: 5
   model_qa:
     step_name: "05_model_qa"
-    prod_model_uri: "models:/MyModel/Production"  # Placeholder
+    prod_model_uri: "models:/MyModel/Production" 
 

@@ -3,17 +3,18 @@ from __future__ import annotations
 import mlflow
 from omegaconf import DictConfig
 import hydra
-import pandas as pd
+import polars as pl
 from sklearn.inspection import permutation_importance
 
-from ml_pipelines.util.mlflow import load_parquet_artifact_as_df, log_input_dataset
 from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
 from ml_pipelines.util.runner import run_step
 
 
-def run(cfg: DictConfig, model, X_train: pd.DataFrame, y_train: pd.DataFrame):
-    log_input_dataset(X_train, name="X_train")
-    log_input_dataset(y_train.to_frame(name="label") if not isinstance(y_train, pd.DataFrame) else y_train, name="y_train")
+def run(cfg: DictConfig, model, X_uri: str, Y_uri: str):
+    X_pl = pl.scan_delta(X_uri).collect()
+    y_pl = pl.scan_delta(Y_uri).collect()
+    X_train = X_pl.to_pandas()
+    y_train = y_pl.to_pandas().iloc[:, 0]
 
     result = permutation_importance(
         model,
@@ -32,9 +33,9 @@ def get_step_inputs(task_values: TaskValues, cfg: DictConfig):
     if train_run_id is None:
         train_run_id = task_values.get(key="train_run_id")
     model = mlflow.sklearn.load_model(f"runs:/{train_run_id}/model")
-    X_train = load_parquet_artifact_as_df(train_run_id, "train/X_train.parquet")
-    y_train = load_parquet_artifact_as_df(train_run_id, "train/y_train.parquet")
-    return {"model": model, "X_train": X_train, "y_train": y_train}
+    X_uri = task_values.get(key="X_train_uri", task_key="train") or task_values.get(key="X_train_uri")
+    Y_uri = task_values.get(key="y_train_uri", task_key="train") or task_values.get(key="y_train_uri")
+    return {"model": model, "X_uri": X_uri, "Y_uri": Y_uri}
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
@@ -45,7 +46,7 @@ def main(cfg: DictConfig):
     pipeline_run_id = task_values.get(key="pipeline_run_id", task_key="prepare_data")
     
     step_inputs = get_step_inputs(task_values, cfg)
-    run_step(
+    result = run_step(
         cfg,
         step_key="feature_importance",
         task_values=task_values,

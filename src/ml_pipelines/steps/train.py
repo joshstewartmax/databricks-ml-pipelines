@@ -3,23 +3,20 @@ from __future__ import annotations
 import mlflow
 from omegaconf import DictConfig
 import hydra
-import pandas as pd
+import polars as pl
 from mlflow.models import infer_signature
 from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_auc_score
 
-from ml_pipelines.util.mlflow import (
-    load_parquet_artifact_as_df,
-    save_dataframe_as_artifact,
-    log_input_dataset,
-)
 from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
 from ml_pipelines.util.runner import run_step
+from ml_pipelines.util.delta_paths import build_delta_path
 
 
-def run(cfg: DictConfig, train_df: pd.DataFrame):
-    log_input_dataset(train_df, name="train_df")
+def run(cfg: DictConfig, train_uri: str):
+    train_pl = pl.scan_delta(train_uri).collect()
+    train_df = train_pl.to_pandas()
 
     X = train_df.drop("label", axis=1)
     y = train_df["label"]
@@ -53,18 +50,20 @@ def run(cfg: DictConfig, train_df: pd.DataFrame):
         signature=signature,
     )
 
-    save_dataframe_as_artifact(X_tr.reset_index(drop=True), "X_train.parquet", artifact_subdir="train")
-    save_dataframe_as_artifact(y_tr.to_frame(name="label").reset_index(drop=True), "y_train.parquet", artifact_subdir="train")
+    # write derived training splits as Delta using Polars
+    X_uri = build_delta_path(cfg, "train", "X_train")
+    y_uri = build_delta_path(cfg, "train", "y_train")
+    pl.from_pandas(X_tr.reset_index(drop=True)).write_delta(X_uri, mode="overwrite")
+    pl.from_pandas(y_tr.to_frame(name="label").reset_index(drop=True)).write_delta(y_uri, mode="overwrite")
 
-    return {"model": best_model, "X_train": X_tr, "y_train": y_tr}
+    return {"model": best_model, "X_train_uri": X_uri, "y_train_uri": y_uri}
 
 
 def get_step_inputs(task_values: TaskValues, cfg: DictConfig):
-    prep_run_id = task_values.get(key="prepare_data_run_id", task_key="prepare_data")
-    if prep_run_id is None:
-        prep_run_id = task_values.get(key="prepare_data_run_id")
-    train_df = load_parquet_artifact_as_df(prep_run_id, "prepare_data/train.parquet")
-    return {"train_df": train_df}
+    train_uri = task_values.get(key="train_uri", task_key="prepare_data")
+    if train_uri is None:
+        train_uri = task_values.get(key="train_uri")
+    return {"train_uri": train_uri}
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
@@ -75,7 +74,7 @@ def main(cfg: DictConfig):
     pipeline_run_id = task_values.get(key="pipeline_run_id", task_key="prepare_data")
 
     step_inputs = get_step_inputs(task_values, cfg)
-    run_step(
+    result = run_step(
         cfg,
         step_key="train",
         task_values=task_values,
@@ -83,6 +82,12 @@ def main(cfg: DictConfig):
         parent_run_id=pipeline_run_id,
         step_inputs=step_inputs,
     )
+    if isinstance(result, dict):
+        if "X_train_uri" in result:
+            task_values.set(key="X_train_uri", value=result["X_train_uri"])
+        if "y_train_uri" in result:
+            task_values.set(key="y_train_uri", value=result["y_train_uri"])
+    # no additional task values to persist except what run() handles for downstream
 
 
 if __name__ == "__main__":  # pragma: no cover

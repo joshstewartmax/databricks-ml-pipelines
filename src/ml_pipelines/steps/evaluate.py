@@ -3,18 +3,17 @@ from __future__ import annotations
 import mlflow
 from omegaconf import DictConfig
 import hydra
-import pandas as pd
+import polars as pl
 from sklearn.metrics import roc_auc_score, RocCurveDisplay
 import matplotlib.pyplot as plt
 
-from ml_pipelines.util.mlflow import load_parquet_artifact_as_df, log_input_dataset
 from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
 from ml_pipelines.util.runner import run_step
 
 
-def run(cfg: DictConfig, model, test_df: pd.DataFrame):
-    log_input_dataset(test_df, name="test_df")
-
+def run(cfg: DictConfig, model, test_uri: str):
+    test_pl = pl.scan_delta(test_uri).collect()
+    test_df = test_pl.to_pandas()
     X_test = test_df.drop("label", axis=1)
     y_test = test_df["label"]
     probs = model.predict_proba(X_test)[:, 1]
@@ -28,17 +27,16 @@ def run(cfg: DictConfig, model, test_df: pd.DataFrame):
 
 
 def get_step_inputs(task_values: TaskValues, cfg: DictConfig):
-    prep_run_id = task_values.get(key="prepare_data_run_id", task_key="prepare_data")
-    if prep_run_id is None:
-        prep_run_id = task_values.get(key="prepare_data_run_id")
-    test_df = load_parquet_artifact_as_df(prep_run_id, "prepare_data/test.parquet")
+    test_uri = task_values.get(key="test_uri", task_key="prepare_data")
+    if test_uri is None:
+        test_uri = task_values.get(key="test_uri")
 
     train_run_id = task_values.get(key="train_run_id", task_key="train")
     if train_run_id is None:
         train_run_id = task_values.get(key="train_run_id")
     model = mlflow.sklearn.load_model(f"runs:/{train_run_id}/model")
 
-    return {"model": model, "test_df": test_df}
+    return {"model": model, "test_uri": test_uri}
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
@@ -49,7 +47,7 @@ def main(cfg: DictConfig):
     pipeline_run_id = task_values.get(key="pipeline_run_id", task_key="prepare_data")
     
     step_inputs = get_step_inputs(task_values, cfg)
-    run_step(
+    result = run_step(
         cfg,
         step_key="evaluate",
         task_values=task_values,

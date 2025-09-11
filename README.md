@@ -1,3 +1,7 @@
+sudo apt-get install openjdk-17-jdk
+
+
+
 # Databricks ML Pipelines
 
 This repository contains a simple machine learning pipeline organised for

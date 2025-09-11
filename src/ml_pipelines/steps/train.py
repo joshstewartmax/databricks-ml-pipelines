@@ -53,8 +53,27 @@ def run(cfg: DictConfig, task_values: TaskValues, train_uri: str):
     # write derived training splits as Delta using Polars
     X_uri = build_delta_path(cfg, "train", "X_train")
     y_uri = build_delta_path(cfg, "train", "y_train")
-    pl.from_pandas(X_tr.reset_index(drop=True)).write_delta(X_uri, mode="overwrite")
-    pl.from_pandas(y_tr.to_frame(name="label").reset_index(drop=True)).write_delta(y_uri, mode="overwrite")
+
+    print(X_uri)
+    print(y_uri)
+    env_name = getattr(cfg.experiment, "env_name", "local")
+    if env_name == "local":
+        pl.from_pandas(X_tr.reset_index(drop=True)).write_delta(X_uri, mode="overwrite")
+        pl.from_pandas(y_tr.to_frame(name="label").reset_index(drop=True)).write_delta(y_uri, mode="overwrite")
+    else:
+        # Use Spark to write to Unity Catalog Volumes to avoid delta-rs rename limitations
+        from pyspark.sql import SparkSession  # type: ignore
+        spark = SparkSession.getActiveSession() or SparkSession.builder.getOrCreate()
+        spark.createDataFrame(X_tr.reset_index(drop=True)).write.format("delta").mode("overwrite").option("delta.enableDeletionVectors", "false").save(X_uri)
+        spark.createDataFrame(y_tr.to_frame(name="label").reset_index(drop=True)).write.format("delta").mode("overwrite").option("delta.enableDeletionVectors", "false").save(y_uri)
+
+    # write task values for downstream steps and access
+    current_run = mlflow.active_run()
+    if current_run is not None:
+        task_values.set(key="train_run_id", value=current_run.info.run_id, task_key="train")
+
+    task_values.set(key="X_train_uri", value=X_uri, task_key="train")
+    task_values.set(key="y_train_uri", value=y_uri, task_key="train")
 
     return {"model": best_model, "X_train_uri": X_uri, "y_train_uri": y_uri}
 

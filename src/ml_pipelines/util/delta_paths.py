@@ -3,7 +3,6 @@ from __future__ import annotations
 from typing import Optional
 
 import mlflow
-from mlflow.tracking import MlflowClient
 from omegaconf import DictConfig
 
 
@@ -23,8 +22,22 @@ def build_delta_path(
     # Choose prefix based on environment
     if env_name == "local":
         prefix: str = cfg.data.delta_prefix.local
+        path_parts = [
+            prefix.rstrip("/"),
+            env_name,
+            experiment_name.strip("/"),
+        ]
     else:
+        # Databricks Volumes layout: /Volumes/<catalog>/<schema>/<volume>/<...>
+        # We need: /Volumes/ml_artifacts/<env>/<volume_name>/<experiment_name>/...
         prefix = cfg.data.delta_prefix.databricks
+        volume_name: str = cfg.data.get("volume_name", "testing")
+        path_parts = [
+            prefix.rstrip("/"),
+            env_name,
+            volume_name,
+            experiment_name.strip("/"),
+        ]
 
     # Resolve current step run id and parent (pipeline) run id from MLflow
     current_run = mlflow.active_run()
@@ -41,13 +54,7 @@ def build_delta_path(
     step_name: str = getattr(getattr(cfg.steps, step_key), "step_name")
     step_segment = f"{step_name}_{step_run_id_short}"
 
-    return "/".join([
-        prefix.rstrip("/"),
-        env_name,
-        experiment_name.strip("/"),
-        pipeline_segment,
-        step_segment,
-        dataset_name,
-    ])
+    path_parts.extend([pipeline_segment, step_segment, dataset_name])
+    return "/".join(path_parts)
 
 

@@ -44,8 +44,8 @@ def run(cfg: DictConfig, task_values: TaskValues):
     # write to delta
     train_uri = build_delta_path(cfg, "prepare_data", "train")
     test_uri = build_delta_path(cfg, "prepare_data", "test")
-    train_df.write.format("delta").mode("overwrite").save(train_uri)
-    test_df.write.format("delta").mode("overwrite").save(test_uri)
+    train_df.write.format("delta").mode("overwrite").option("delta.enableDeletionVectors", "false").save(train_uri)
+    test_df.write.format("delta").mode("overwrite").option("delta.enableDeletionVectors", "false").save(test_uri)
 
     # persist URIs directly to task values for downstream steps
     task_values.set(key="train_uri", value=train_uri, task_key="prepare_data")
@@ -62,20 +62,13 @@ def main(cfg: DictConfig):
     pipeline_run_id = begin_pipeline_run(cfg)
     task_values.set(key="pipeline_run_id", value=pipeline_run_id)
 
-    result = run_step(
+    run_step(
         cfg,
         step_key="prepare_data",
         task_values=task_values,
         step_func=run,
         parent_run_id=pipeline_run_id,
     )
-    # persist URIs into task values for downstream steps
-    if isinstance(result, dict):
-        if "train_uri" in result:
-            task_values.set(key="train_uri", value=result["train_uri"])
-        if "test_uri" in result:
-            task_values.set(key="test_uri", value=result["test_uri"])
-
 
 if __name__ == "__main__":  # pragma: no cover - script entry point
     main()

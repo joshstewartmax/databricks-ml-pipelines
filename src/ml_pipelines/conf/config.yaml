@@ -4,13 +4,11 @@ defaults:
 
 seed: 42
 
-experiment:
-  env_name: local
-
 data:
   delta_prefix:
     local: ".data/delta"
     databricks: "/Volumes/ml_artifacts"
+  volume_name: "testing"
 
 steps:
   prepare_data:

@@ -8,13 +8,17 @@ from sklearn.inspection import permutation_importance
 
 from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
 from ml_pipelines.util.runner import run_step
+from ml_pipelines.util.mlflow_datasets import log_delta_input
 
 
-def run(cfg: DictConfig, task_values: TaskValues, model, X_uri: str, Y_uri: str):
-    X_pl = pl.scan_delta(X_uri).collect()
-    y_pl = pl.scan_delta(Y_uri).collect()
-    X_train = X_pl.to_pandas()
-    y_train = y_pl.to_pandas().iloc[:, 0]
+def run(cfg: DictConfig, task_values: TaskValues, model, train_uri: str):
+    if cfg.mlflow.log_datasets:
+        log_delta_input(path=train_uri, name="prepare_data.train")
+        
+    train_pl = pl.scan_delta(train_uri).collect()
+    train_df = train_pl.to_pandas()
+    X_train = train_df.drop("label", axis=1)
+    y_train = train_df["label"]
 
     result = permutation_importance(
         model,
@@ -34,9 +38,8 @@ def get_step_inputs(task_values: TaskValues, cfg: DictConfig):
     if train_run_id is None:
         train_run_id = task_values.get(key="train_run_id")
     model = mlflow.sklearn.load_model(f"runs:/{train_run_id}/model")
-    X_uri = task_values.get(key="X_train_uri", task_key="train") or task_values.get(key="X_train_uri")
-    Y_uri = task_values.get(key="y_train_uri", task_key="train") or task_values.get(key="y_train_uri")
-    return {"model": model, "X_uri": X_uri, "Y_uri": Y_uri}
+    train_uri = task_values.get(key="train_uri", task_key="prepare_data") or task_values.get(key="train_uri")
+    return {"model": model, "train_uri": train_uri}
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")

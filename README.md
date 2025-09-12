@@ -1,5 +1,8 @@
 sudo apt-get install openjdk-17-jdk
 
+polars can read from delta, but can only write to parquet directly
+only spark can write delta
+
 
 
 # Databricks ML Pipelines

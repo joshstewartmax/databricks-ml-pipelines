@@ -32,7 +32,9 @@ def get_spark_session(cfg: DictConfig) -> SparkSession:
             .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
             .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
         )
-        return configure_spark_with_delta_pip(builder).getOrCreate()
+        spark = configure_spark_with_delta_pip(builder).getOrCreate()
+        spark.sparkContext.setLogLevel("ERROR")
+        return spark
 
     # On Databricks or other environments, use the active session or create one
     return SparkSession.getActiveSession() or SparkSession.builder.getOrCreate()

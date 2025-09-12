@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 import mlflow
-from omegaconf import DictConfig
-import hydra
+from hydra import initialize, compose
 
 from ml_pipelines.steps import prepare_data, train, evaluate, feature_importance, model_qa
 from ml_pipelines.runner import run_step
@@ -10,9 +9,11 @@ from ml_pipelines.util.task_values import LocalTaskValues
 from ml_pipelines.util.mlflow import begin_pipeline_run
 
 
-@hydra.main(version_base=None, config_path="conf", config_name="config")
-def main(cfg: DictConfig):
+def main():
     """Run the full ML pipeline locally."""
+    with initialize(version_base=None, config_path="conf"):
+        cfg = compose(config_name="config", overrides=["pipeline=local"])
+
     mlflow.set_experiment(cfg.pipeline.experiment_name)
     
     # this replicates the functionality of Databricks task values

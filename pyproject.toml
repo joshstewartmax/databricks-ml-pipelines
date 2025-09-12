@@ -10,20 +10,20 @@ dependencies = [
     "hydra-core>=1.3.2",
     "matplotlib>=3.10.6",
     "mlflow>=3.3.2",
-    "numpy<2",
+    "numpy<2", # databricks seems to require numpy<2
     "polars>=1.33.1",
     "scikit-learn>=1.7.1",
 ]
 
 [project.scripts]
-run-pipeline = "ml_pipelines.pipeline:main"
+# to run locally
+local-pipeline = "ml_pipelines.local_pipeline:main"
+# to run steps as Databricks Tasks
 prepare-data = "ml_pipelines.steps.prepare_data:main"
 train-model = "ml_pipelines.steps.train:main"
 evaluate-model = "ml_pipelines.steps.evaluate:main"
 feature-importance = "ml_pipelines.steps.feature_importance:main"
 model-qa = "ml_pipelines.steps.model_qa:main"
-initialize-pipeline = "ml_pipelines.steps.initialize_pipeline:main"
-finalize-pipeline = "ml_pipelines.steps.finalize_pipeline:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

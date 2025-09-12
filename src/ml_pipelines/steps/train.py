@@ -19,10 +19,11 @@ def run(cfg: DictConfig, task_values: TaskValues, train_uri: str):
         log_delta_input(path=train_uri, name="prepare_data.train")
         
     train_pl = pl.scan_delta(train_uri).collect()
-    train_df = train_pl.to_pandas()
+    X_pl = train_pl.drop("label")
+    y_pl = train_pl["label"]
 
-    X = train_df.drop("label", axis=1)
-    y = train_df["label"]
+    X = X_pl.to_numpy()
+    y = y_pl.to_numpy()
 
     X_tr, X_val, y_tr, y_val = train_test_split(
         X, y, test_size=cfg.steps.train.val_size, random_state=cfg.seed
@@ -44,7 +45,7 @@ def run(cfg: DictConfig, task_values: TaskValues, train_uri: str):
     mlflow.log_metric("val_auc", val_auc)
     mlflow.log_params(search.best_params_)
 
-    input_example = X_tr.head(5).astype("float64")
+    input_example = X_tr[:5].astype("float64")
     signature = infer_signature(model_input=input_example, model_output=best_model.predict(input_example))
     mlflow.sklearn.log_model(
         best_model,

@@ -16,9 +16,10 @@ def run(cfg: DictConfig, task_values: TaskValues, model, train_uri: str):
         log_delta_input(path=train_uri, name="prepare_data.train")
         
     train_pl = pl.scan_delta(train_uri).collect()
-    train_df = train_pl.to_pandas()
-    X_train = train_df.drop("label", axis=1)
-    y_train = train_df["label"]
+    X_pl = train_pl.drop("label")
+    y_pl = train_pl["label"]
+    X_train = X_pl.to_numpy()
+    y_train = y_pl.to_numpy()
 
     result = permutation_importance(
         model,
@@ -27,7 +28,7 @@ def run(cfg: DictConfig, task_values: TaskValues, model, train_uri: str):
         n_repeats=cfg.steps.feature_importance.n_repeats,
         random_state=cfg.seed,
     )
-    importances = {col: imp for col, imp in zip(X_train.columns, result.importances_mean)}
+    importances = {col: imp for col, imp in zip(X_pl.columns, result.importances_mean)}
     mlflow.log_dict(importances, "feature_importance.json")
     task_values.set(key="feature_importance_logged", value=True, task_key="feature_importance")
     return importances

@@ -13,9 +13,10 @@ from ml_pipelines.util.runner import run_step
 
 def run(cfg: DictConfig, task_values: TaskValues, model, test_uri: str):
     test_pl = pl.scan_delta(test_uri).collect()
-    test_df = test_pl.to_pandas()
-    X_test = test_df.drop("label", axis=1)
-    y_test = test_df["label"]
+    X_pl = test_pl.drop("label")
+    y_pl = test_pl["label"]
+    X_test = X_pl.to_numpy()
+    y_test = y_pl.to_numpy()
     probs = model.predict_proba(X_test)[:, 1]
     auc = roc_auc_score(y_test, probs)
     mlflow.log_metric("test_auc", auc)

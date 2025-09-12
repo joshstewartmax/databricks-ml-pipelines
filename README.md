@@ -65,7 +65,7 @@ This repo demonstrates a maintainable alternative to ad‑hoc Databricks noteboo
 - **Run steps as Databricks Lakeflow Job tasks** using Python wheel entrypoints
 - **Configure behavior with Hydra** (local/dev/prod overlays)
 - **Track experiments and artifacts with MLflow**, including dataset lineage for Delta inputs
-- **Use Spark only for data preparation**, persist intermediate datasets as Delta in a Volume, then **switch to Polars** for fast, lightweight model workflows
+- **Use Spark only for data preparation**, persist intermediate datasets as Delta in a Volume, then **switch to Polars** for fast model workflows
 
 ---
 
@@ -82,7 +82,7 @@ This repo demonstrates a maintainable alternative to ad‑hoc Databricks noteboo
   - Tasks run Python wheel entrypoints from `pyproject.toml [project.scripts]`:
     - `prepare-data`, `train-model`, `evaluate-model`, `feature-importance`, `model-qa`
   - `depends_on` wires task order: `prepare_data -> train -> (evaluate & feature_importance) -> model_qa`
-  - All tasks currently point to an `existing_cluster_id`. In practice, you would configure a Spark cluster for `prepare_data` and a single-node CPU instance for others.
+  - All tasks currently point to an `existing_cluster_id` which is currently set to the ID for Shared ML. In future, we should be able to just use the spark cluste for `prepare_data` and then have the rest of the steps use a smaller, single-node cluster since we won't be touching spark.
 
 ```12:58:/home/josh/repos/databricks-ml-pipelines/resources/ml_pipeline.job.yml
 resources:
@@ -138,7 +138,7 @@ targets:
 
 ## Configuration with Hydra
 
-Hydra organizes configuration under `src/ml_pipelines/conf`.
+[Hydra](https://hydra.cc/docs/intro/) organizes configuration under `src/ml_pipelines/conf`.
 
 - Base config: `conf/config.yaml`
   - Declares `defaults: - pipeline: local`, seeds, data locations, and step I/O contracts (keys stored/retrieved via Task Values).

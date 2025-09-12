@@ -201,15 +201,15 @@ def run_step(...):
   - Paths are stored in Task Values and used by downstream steps
 
 ```14:36:/home/josh/repos/databricks-ml-pipelines/src/ml_pipelines/steps/prepare_data.py
-train_uri = build_delta_path(cfg, "prepare_data", "train")
+train_path = build_delta_path(cfg, "prepare_data", "train")
 ...
-train_df.write.format("delta").mode("overwrite").option("delta.enableDeletionVectors", "false").save(train_uri)
+train_df.write.format("delta").mode("overwrite").option("delta.enableDeletionVectors", "false").save(train_path)
 ```
 
 - Downstream steps use Polars to read Delta directly, avoiding Spark overhead:
 
 ```17:23:/home/josh/repos/databricks-ml-pipelines/src/ml_pipelines/steps/train.py
-train_pl = pl.scan_delta(train_uri).collect()
+train_pl = pl.scan_delta(train_path).collect()
 X_pl = train_pl.drop("label")
 ...
 ```
@@ -229,11 +229,13 @@ X_pl = train_pl.drop("label")
 To pass metadata between Databricks tasks, the repo abstracts Databricks Task Values:
 - `util/task_values.py` provides `DatabricksTaskValues` (backed by `dbutils.jobs.taskValues`) and `LocalTaskValues` (in-memory for local runs).
 - Step I/O contracts are declared in Hydra under `steps.<name>.inputs/outputs`:
-  - `prepare_data` outputs `train_uri`, `test_uri`, `pipeline_run_id`
-  - `train` reads `train_uri`, writes `train_run_id`
-  - `evaluate` reads `test_uri` and `train_run_id`, writes `test_auc`
-  - `feature_importance` reads `train_uri` and `train_run_id`, writes a boolean flag
-  - `model_qa` writes `qa_complete`
+  - Inputs use a mapping with `key` and `source_step`
+  - Outputs only require `key` (the producing step's `step_name` is used as the namespace)
+  - `prepare_data` outputs `train_path`, `test_path`, `pipeline_run_id`
+  - `train` reads `train_path`, writes `train_run_id`
+  - `evaluate` reads `test_path` and `train_run_id`
+  - `feature_importance` reads `train_path` and `train_run_id`
+  - `model_qa` hasn't really been implemented but would rest `test_path`, `holdout_path`, `unlabeled_path`
 
 ```36:54:/home/josh/repos/databricks-ml-pipelines/src/ml_pipelines/util/task_values.py
 class DatabricksTaskValues(TaskValues):

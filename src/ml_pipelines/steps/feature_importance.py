@@ -11,44 +11,39 @@ from ml_pipelines.runner import run_step
 from ml_pipelines.util.mlflow import log_delta_input
 
 
-def run(cfg: DictConfig, task_values: TaskValues, model, train_uri: str):
+def run(cfg: DictConfig, task_values: TaskValues, train_run_id: str, test_path: str):
     if cfg.mlflow.log_datasets:
-        log_delta_input(path=train_uri, name="prepare_data.train")
+        log_delta_input(path=test_path, name="prepare_data.test")
         
-    train_pl = pl.scan_delta(train_uri).collect()
-    X_pl = train_pl.drop("label")
-    y_pl = train_pl["label"]
-    X_train = X_pl.to_numpy()
-    y_train = y_pl.to_numpy()
+    test_df = pl.scan_delta(test_path).collect()
+    X_test = test_df.drop("label")
+    y_test = test_df.select("label")
+
+    model = mlflow.sklearn.load_model(f"runs:/{train_run_id}/model")
 
     result = permutation_importance(
         model,
-        X_train,
-        y_train,
+        X_test.to_numpy(),
+        y_test.to_numpy(),
         n_repeats=cfg.steps.feature_importance.n_repeats,
         random_state=cfg.seed,
     )
-    importances = {col: imp for col, imp in zip(X_pl.columns, result.importances_mean)}
+    importances = {col: imp for col, imp in zip(X_test.columns, result.importances_mean)}
     mlflow.log_dict(importances, "feature_importance.json")
-    task_values.set(
-        key=cfg.steps.feature_importance.outputs.feature_importance_logged.key,
-        value=True,
-        task_key=cfg.steps.feature_importance.outputs.feature_importance_logged.task_key,
-    )
     return importances
 
 
 def get_step_inputs(task_values: TaskValues, cfg: DictConfig):
     train_run_id = task_values.get(
         key=cfg.steps.feature_importance.inputs.train_run_id.key,
-        task_key=cfg.steps.feature_importance.inputs.train_run_id.task_key,
+        task_key=cfg.steps.feature_importance.inputs.train_run_id.source_step,
     )
-    model = mlflow.sklearn.load_model(f"runs:/{train_run_id}/model")
-    train_uri = task_values.get(
-        key=cfg.steps.feature_importance.inputs.train_uri.key,
-        task_key=cfg.steps.feature_importance.inputs.train_uri.task_key,
+    
+    test_path = task_values.get(
+        key=cfg.steps.feature_importance.inputs.train_path.key,
+        task_key=cfg.steps.feature_importance.inputs.train_path.source_step,
     )
-    return {"model": model, "train_uri": train_uri}
+    return {"train_run_id": train_run_id, "test_path": test_path}
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")

@@ -13,7 +13,7 @@ def begin_pipeline_run(cfg: DictConfig) -> str:
     client = MlflowClient()
     run = client.create_run(
         experiment_id=exp.experiment_id,
-        run_name="pipeline_run",
+        run_name=cfg.pipeline.pipeline_run_name,
         tags={},
     )
 

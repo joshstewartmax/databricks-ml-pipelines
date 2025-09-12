@@ -9,40 +9,43 @@ import matplotlib.pyplot as plt
 
 from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
 from ml_pipelines.runner import run_step
+from ml_pipelines.util.mlflow import log_delta_input
 
 
-def run(cfg: DictConfig, task_values: TaskValues, model, test_uri: str):
-    test_pl = pl.scan_delta(test_uri).collect()
-    X_pl = test_pl.drop("label")
-    y_pl = test_pl["label"]
-    X_test = X_pl.to_numpy()
-    y_test = y_pl.to_numpy()
-    probs = model.predict_proba(X_test)[:, 1]
-    auc = roc_auc_score(y_test, probs)
-    mlflow.log_metric("test_auc", auc)
-    disp = RocCurveDisplay.from_predictions(y_test, probs)
-    fig = disp.figure_
-    mlflow.log_figure(fig, "roc_curve.png")
-    plt.close(fig)
-    task_values.set(
-        key=cfg.steps.evaluate.outputs.test_auc.key,
-        value=auc,
-        task_key=cfg.steps.evaluate.outputs.test_auc.task_key,
+def run(cfg: DictConfig, task_values: TaskValues, train_run_id: str, test_path: str):
+    if cfg.mlflow.log_datasets:
+        log_delta_input(path=test_path, name="prepare_data.test")
+
+    # I've just used mlflow.models.evaluate to get out-of-the-box evals, 
+    # but the below would work for when we do custom stuff
+    # model = mlflow.sklearn.load_model(f"runs:/{train_run_id}/model")
+
+    test_df = pl.scan_delta(test_path)
+
+    X_test = test_df.drop("label").collect().to_numpy()
+    y_test = test_df.select("label").collect().to_numpy().ravel()
+
+    result = mlflow.models.evaluate(
+        model=f"runs:/{train_run_id}/model",
+        data=X_test,
+        targets=y_test,
+        model_type="classifier",
+        evaluators=["default"],
     )
-    return {"test_auc": auc}
+
+    return {"eval_result": result}
 
 
 def get_step_inputs(task_values: TaskValues, cfg: DictConfig):
-    test_uri = task_values.get(
-        key=cfg.steps.evaluate.inputs.test_uri.key,
-        task_key=cfg.steps.evaluate.inputs.test_uri.task_key,
+    test_path = task_values.get(
+        key=cfg.steps.evaluate.inputs.test_path.key,
+        task_key=cfg.steps.evaluate.inputs.test_path.source_step,
     )
     train_run_id = task_values.get(
         key=cfg.steps.evaluate.inputs.train_run_id.key,
-        task_key=cfg.steps.evaluate.inputs.train_run_id.task_key,
+        task_key=cfg.steps.evaluate.inputs.train_run_id.source_step,
     )
-    model = mlflow.sklearn.load_model(f"runs:/{train_run_id}/model")
-    return {"model": model, "test_uri": test_uri}
+    return {"train_run_id": train_run_id, "test_path": test_path}
 
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")

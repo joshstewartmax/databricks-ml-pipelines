@@ -1,2 +1,3 @@
 experiment_name: /Shared/ml-pipelines-prod
+pipeline_run_name: prod_run
 env_name: prod

@@ -41,10 +41,10 @@ def build_delta_path(
 
     # Resolve current step run id and parent (pipeline) run id from MLflow
     current_run = mlflow.active_run()
-    if current_run is None:
-        raise RuntimeError("No active MLflow run. build_delta_path must be called inside a step run.")
     current_run_id = current_run.info.run_id
+
     run_info = mlflow.get_run(current_run_id)
+    
     parent_run_id: Optional[str] = run_info.data.tags.get("mlflow.parentRunId")
     pipeline_run_id = parent_run_id or current_run_id
 

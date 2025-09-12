@@ -34,7 +34,7 @@ def main():
         task_values.set(
             key=cfg.steps.prepare_data.outputs.pipeline_run_id.key,
             value=pipeline_run_id,
-            task_key=cfg.steps.prepare_data.outputs.pipeline_run_id.task_key,
+            task_key=cfg.steps.prepare_data.step_name,
         )
 
         logger.info("Starting step: prepare_data")

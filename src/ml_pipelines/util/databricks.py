@@ -1,5 +1,6 @@
-# these will be available in databricks runtime
-from pyspark.sql import SparkSession  # type: ignore
+from pyspark.sql import SparkSession
+
+# this will only be available in databricks runtime
 from pyspark.dbutils import DBUtils  # type: ignore
 
 

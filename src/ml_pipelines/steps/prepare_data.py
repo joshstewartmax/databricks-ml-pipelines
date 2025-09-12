@@ -29,23 +29,37 @@ def run(cfg: DictConfig, task_values: TaskValues):
     train_df, test_df = df.randomSplit([train_size, test_size], seed=int(cfg.seed))
 
     # write to delta
-    train_uri = build_delta_path(cfg, "prepare_data", "train")
-    test_uri = build_delta_path(cfg, "prepare_data", "test")
-    train_df.write.format("delta").mode("overwrite").option("delta.enableDeletionVectors", "false").save(train_uri)
-    test_df.write.format("delta").mode("overwrite").option("delta.enableDeletionVectors", "false").save(test_uri)
+    train_path = build_delta_path(cfg, "prepare_data", "train")
+    test_path = build_delta_path(cfg, "prepare_data", "test")
+    (
+        train_df
+        .write
+        .format("delta")
+        .mode("overwrite")
+        .option("delta.enableDeletionVectors", "false")
+        .save(train_path)
+    )
+    (
+        test_df
+        .write
+        .format("delta")
+        .mode("overwrite")
+        .option("delta.enableDeletionVectors", "false")
+        .save(test_path)
+    )
 
     # persist URIs via config-defined outputs mapping
     task_values.set(
-        key=cfg.steps.prepare_data.outputs.train_uri.key,
-        value=train_uri,
-        task_key=cfg.steps.prepare_data.outputs.train_uri.task_key,
+        key=cfg.steps.prepare_data.outputs.train_path.key,
+        value=train_path,
+        task_key=cfg.steps.prepare_data.step_name,
     )
     task_values.set(
-        key=cfg.steps.prepare_data.outputs.test_uri.key,
-        value=test_uri,
-        task_key=cfg.steps.prepare_data.outputs.test_uri.task_key,
+        key=cfg.steps.prepare_data.outputs.test_path.key,
+        value=test_path,
+        task_key=cfg.steps.prepare_data.step_name,
     )
-    return {"train_uri": train_uri, "test_uri": test_uri}
+    return {"train_path": train_path, "test_path": test_path}
 
 
 
@@ -58,7 +72,7 @@ def main(cfg: DictConfig):
     task_values.set(
         key=cfg.steps.prepare_data.outputs.pipeline_run_id.key,
         value=pipeline_run_id,
-        task_key=cfg.steps.prepare_data.outputs.pipeline_run_id.task_key,
+        task_key=cfg.steps.prepare_data.step_name,
     )
 
     run_step(

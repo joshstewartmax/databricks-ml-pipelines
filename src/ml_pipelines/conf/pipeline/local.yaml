@@ -1,2 +1,3 @@
 experiment_name: local_pipeline_experiment
+pipeline_run_name: test_run
 env_name: local

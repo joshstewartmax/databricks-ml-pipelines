@@ -3,30 +3,17 @@ from __future__ import annotations
 import mlflow
 from omegaconf import DictConfig
 import hydra
-from pyspark.sql import SparkSession
 import pyspark.sql.functions as F
 
 from ml_pipelines.util.mlflow import begin_pipeline_run
 from ml_pipelines.util.task_values import DatabricksTaskValues, TaskValues
 from ml_pipelines.util.runner import run_step
 from ml_pipelines.util.delta_paths import build_delta_path
+from ml_pipelines.util.spark import get_spark_session
 
 
 def run(cfg: DictConfig, task_values: TaskValues):
-    env_name = getattr(cfg.experiment, "env_name", "local")
-    if env_name == "local":
-        # Configure Spark with Delta Lake for local runs
-        from delta import configure_spark_with_delta_pip  # type: ignore
-        builder = (
-            SparkSession.builder
-            .appName("prepare_data")
-            .master("local[*]")
-            .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-            .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-        )
-        spark = configure_spark_with_delta_pip(builder).getOrCreate()
-    else:
-        spark = SparkSession.getActiveSession() or SparkSession.builder.getOrCreate()
+    spark = get_spark_session(cfg)
 
     # synthesize dataset directly in Spark
     n = 100

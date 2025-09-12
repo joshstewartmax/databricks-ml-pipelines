@@ -43,10 +43,8 @@ targets:
     mode: production
     workspace:
       host: https://adb-5326205098362647.7.azuredatabricks.net
-      # We explicitly deploy to /Workspace/Users/j.stewart@codat.io to make sure we only have a single copy.
-      root_path: /Workspace/Users/j.stewart@codat.io/.bundle/${bundle.name}/${bundle.target}
     permissions:
-      - user_name: j.stewart@codat.io
+      - group_name: DataScience-Read-Data
         level: CAN_MANAGE
     variables:
       pipeline: databricks-prod

@@ -4,8 +4,6 @@ import mlflow
 from omegaconf import DictConfig
 import hydra
 import polars as pl
-from sklearn.metrics import roc_auc_score, RocCurveDisplay
-import matplotlib.pyplot as plt
 
 from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
 from ml_pipelines.runner import run_step

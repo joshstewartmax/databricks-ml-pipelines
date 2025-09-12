@@ -7,43 +7,11 @@ This repo demonstrates a maintainable alternative to ad‑hoc Databricks noteboo
 - **Track experiments and artifacts with MLflow**, including dataset lineage for Delta inputs
 - **Use Spark only for data preparation**, persist intermediate datasets as Delta in a Volume, then **switch to Polars** for fast, lightweight model workflows
 
-### Why this over notebooks?
-- **Data source logging**: Delta inputs can be logged as MLflow Datasets with helpful tags
-- **Dataset artifacts managed**: Deterministic Delta paths per run/step stored in Task Values
-- **Composable compute**: Spark cluster for `prepare_data`, single large-memory node for CPU-bound steps
-- **Consistent experiment naming** via Hydra config
-- **Maintainable code**: Regular Python modules, typed utilities, testable step functions
-- **Faster iteration**: Polars replaces Pandas for big speed-ups on single-node steps
-
 ---
 
-## High-level architecture
+## ML Pipeline as a Databricks Job
 
-```mermaid
-flowchart LR
-  subgraph lakeflow[Lakeflow Job]
-    A[prepare_data (Spark)] --> B[train (Single Node)]
-    B --> C[evaluate (Single Node)]
-    B --> D[feature_importance (Single Node)]
-    C --> E[model_qa (Single Node)]
-    D --> E[model_qa (Single Node)]
-  end
-
-  subgraph storage[Storage]
-    V[/Databricks Volume /Volumes/ml_artifacts/{env}/{volume}/{experiment}/.../]
-  end
-
-  A -- writes Delta --> V
-  B -- reads Delta via Polars --> V
-  C -- reads Delta via Polars --> V
-  D -- reads Delta via Polars --> V
-```
-
-- Each box corresponds to a Python entrypoint wired as a Databricks task.
-- `prepare_data` runs on Spark, writes train/test Delta tables to a deterministic path within a Databricks Volume.
-- All downstream steps use Polars to read Delta directly via `scan_delta` (no Spark session overhead).
-
----
+![Pipeline overview](docs/images/pipeline-screenshot.png)
 
 ## Orchestration with Databricks Asset Bundles (Lakeflow)
 

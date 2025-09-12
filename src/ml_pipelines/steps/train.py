@@ -10,8 +10,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import roc_auc_score
 
 from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
-from ml_pipelines.util.runner import run_step
-from ml_pipelines.util.mlflow_datasets import log_delta_input
+from ml_pipelines.runner import run_step
+from ml_pipelines.util.mlflow import log_delta_input
 
 
 def run(cfg: DictConfig, task_values: TaskValues, train_uri: str):

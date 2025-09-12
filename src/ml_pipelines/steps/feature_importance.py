@@ -7,8 +7,8 @@ import polars as pl
 from sklearn.inspection import permutation_importance
 
 from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
-from ml_pipelines.util.runner import run_step
-from ml_pipelines.util.mlflow_datasets import log_delta_input
+from ml_pipelines.runner import run_step
+from ml_pipelines.util.mlflow import log_delta_input
 
 
 def run(cfg: DictConfig, task_values: TaskValues, model, train_uri: str):

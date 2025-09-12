@@ -7,7 +7,7 @@ import pyspark.sql.functions as F
 
 from ml_pipelines.util.mlflow import begin_pipeline_run
 from ml_pipelines.util.task_values import DatabricksTaskValues, TaskValues
-from ml_pipelines.util.runner import run_step
+from ml_pipelines.runner import run_step
 from ml_pipelines.util.delta_paths import build_delta_path
 from ml_pipelines.util.spark import get_spark_session
 

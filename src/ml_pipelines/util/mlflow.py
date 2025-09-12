@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import os
+from typing import Optional, Dict
 
 import mlflow
+from mlflow.data import load_delta
 from mlflow.tracking import MlflowClient
 from omegaconf import DictConfig
-import tempfile
-import pandas as pd
 
 def begin_pipeline_run(cfg: DictConfig) -> str:
     exp = mlflow.get_experiment_by_name(cfg.pipeline.experiment_name)
@@ -26,40 +25,37 @@ def end_pipeline_run(parent_run_id: str, status: str = "FINISHED") -> None:
     client.set_terminated(run_id=parent_run_id, status=status)
 
 
-def save_dataframe_as_artifact(df: pd.DataFrame, filename: str, artifact_subdir: str) -> None:
-    """Save a DataFrame to a temp parquet and log as an MLflow artifact under subdir."""
-    tmpdir = tempfile.mkdtemp()
-    local_path = os.path.join(tmpdir, filename)
-    df.to_parquet(local_path, index=False)
-    mlflow.log_artifact(local_path, artifact_path=artifact_subdir)
+def log_delta_input(
+    *,
+    path: Optional[str] = None,
+    table_name: Optional[str] = None,
+    name: str,
+    version: Optional[int] = None,
+    tags: Optional[Dict[str, str]] = None,
+) -> None:
+    """Create a Dataset from a Delta table and log it as an MLflow input.
 
+    Args:
+        path: Filesystem/UC Volumes path to the Delta directory.
+        table_name: Optional fully-qualified table name (catalog.schema.table).
+        name: Display name or context shown in the Inputs tab.
+        version: Optional Delta version/snapshot to bind the dataset to.
+        tags: Optional extra tags to attach to the run for discoverability.
+    """
+    if path is None and table_name is None:
+        raise ValueError("Provide either path or table_name")
 
-def load_parquet_artifact_as_df(run_id: str, artifact_rel_path: str) -> pd.DataFrame:
-    """Download a parquet artifact and load it as a DataFrame."""
-    client = MlflowClient()
-    artifact_path = client.download_artifacts(run_id, artifact_rel_path)
-    df = pd.read_parquet(artifact_path)
-    df.attrs["source_artifact"] = artifact_rel_path
-    return df
+    dataset = load_delta(path=path, table_name=table_name, version=version)
 
+    # Helpful tags for discoverability in the run page
+    mlflow.set_tag("dataset_path", path or table_name or "")
+    if hasattr(dataset, "version") and getattr(dataset, "version") is not None:
+        mlflow.set_tag("dataset_version", str(getattr(dataset, "version")))
+    if tags:
+        mlflow.set_tags(tags)
 
-def log_input_dataset(df: pd.DataFrame, name: str) -> None:
-    source_artifact = df.attrs.get("source_artifact")
-
-    dataset_name = str(source_artifact) if source_artifact else name
-    
-    # Upcast only integer-like columns to float64 to avoid mlflow warnings
-    int_to_float_map = {
-        col: "float64"
-        for col in df.columns
-        if pd.api.types.is_integer_dtype(df[col])
-    }
-    if int_to_float_map:
-        df_for_logging = df.astype(int_to_float_map, copy=False)
-    else:
-        df_for_logging = df
-
-    dataset = mlflow.data.from_pandas(df_for_logging, name=dataset_name)
-
-    mlflow.log_input(dataset)
-
+    # Support both modern and legacy signatures for log_input
+    try:
+        mlflow.log_input(dataset, name=name)
+    except TypeError:
+        mlflow.log_input(dataset, context=name)

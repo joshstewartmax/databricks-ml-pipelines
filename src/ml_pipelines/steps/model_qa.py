@@ -6,7 +6,7 @@ import hydra
 
 from ml_pipelines.util.mlflow import end_pipeline_run
 from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
-from ml_pipelines.util.runner import run_step
+from ml_pipelines.runner import run_step
 
 
 def run(cfg: DictConfig, task_values: TaskValues):

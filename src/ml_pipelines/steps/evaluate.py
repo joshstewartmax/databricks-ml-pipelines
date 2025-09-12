@@ -8,7 +8,7 @@ from sklearn.metrics import roc_auc_score, RocCurveDisplay
 import matplotlib.pyplot as plt
 
 from ml_pipelines.util.task_values import TaskValues, DatabricksTaskValues
-from ml_pipelines.util.runner import run_step
+from ml_pipelines.runner import run_step
 
 
 def run(cfg: DictConfig, task_values: TaskValues, model, test_uri: str):

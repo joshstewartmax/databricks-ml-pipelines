@@ -14,20 +14,66 @@ steps:
   prepare_data:
     step_name: "01_prepare_data"
     test_size: 0.2
+    inputs: {}
+    outputs:
+      train_uri:
+        key: "train_uri"
+        task_key: "prepare_data"
+      test_uri:
+        key: "test_uri"
+        task_key: "prepare_data"
+      pipeline_run_id:
+        key: "pipeline_run_id"
+        task_key: "prepare_data"
   train:
     step_name: "02_train"
     val_size: 0.2
     model_params:
       n_estimators: 50
       random_state: ${seed}
+    inputs:
+      train_uri:
+        key: "train_uri"
+        task_key: "prepare_data"
+    outputs:
+      train_run_id:
+        key: "train_run_id"
+        task_key: "train"
   evaluate: 
     step_name: "03_evaluate"
+    inputs:
+      test_uri:
+        key: "test_uri"
+        task_key: "prepare_data"
+      train_run_id:
+        key: "train_run_id"
+        task_key: "train"
+    outputs:
+      test_auc:
+        key: "test_auc"
+        task_key: "evaluate"
   feature_importance:
     step_name: "04_feature_importance"
     n_repeats: 5
+    inputs:
+      train_uri:
+        key: "train_uri"
+        task_key: "prepare_data"
+      train_run_id:
+        key: "train_run_id"
+        task_key: "train"
+    outputs:
+      feature_importance_logged:
+        key: "feature_importance_logged"
+        task_key: "feature_importance"
   model_qa:
     step_name: "05_model_qa"
     prod_model_uri: "models:/MyModel/Production" 
+    inputs: {}
+    outputs:
+      qa_complete:
+        key: "qa_complete"
+        task_key: "model_qa"
 
 mlflow:
   log_datasets: true

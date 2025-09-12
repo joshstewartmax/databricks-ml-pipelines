@@ -54,18 +54,22 @@ def run(cfg: DictConfig, task_values: TaskValues, train_uri: str):
         signature=signature,
     )
 
-    # no longer persist X_train/y_train; downstream steps should read prepare_data.train
+    # write train_run_id via config-defined outputs mapping
     current_run = mlflow.active_run()
-    if current_run is not None:
-        task_values.set(key="train_run_id", value=current_run.info.run_id, task_key="train")
+    task_values.set(
+        key=cfg.steps.train.outputs.train_run_id.key,
+        value=current_run.info.run_id,
+        task_key=cfg.steps.train.outputs.train_run_id.task_key,
+    )
 
     return {"model": best_model}
 
 
 def get_step_inputs(task_values: TaskValues, cfg: DictConfig):
-    train_uri = task_values.get(key="train_uri", task_key="prepare_data")
-    if train_uri is None:
-        train_uri = task_values.get(key="train_uri")
+    train_uri = task_values.get(
+        key=cfg.steps.train.inputs.train_uri.key,
+        task_key=cfg.steps.train.inputs.train_uri.task_key,
+    )
     return {"train_uri": train_uri}
 
 

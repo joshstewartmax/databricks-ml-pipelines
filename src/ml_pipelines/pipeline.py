@@ -20,7 +20,11 @@ def main(cfg: DictConfig):
 
     pipeline_run_id = begin_pipeline_run(cfg)
     with mlflow.start_run(run_id=pipeline_run_id):
-        task_values.set(key="pipeline_run_id", value=pipeline_run_id, task_key="prepare_data")
+        task_values.set(
+            key=cfg.steps.prepare_data.outputs.pipeline_run_id.key,
+            value=pipeline_run_id,
+            task_key=cfg.steps.prepare_data.outputs.pipeline_run_id.task_key,
+        )
 
         run_step(
             cfg,

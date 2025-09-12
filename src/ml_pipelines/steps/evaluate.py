@@ -24,20 +24,24 @@ def run(cfg: DictConfig, task_values: TaskValues, model, test_uri: str):
     fig = disp.figure_
     mlflow.log_figure(fig, "roc_curve.png")
     plt.close(fig)
-    task_values.set(key="test_auc", value=auc, task_key="evaluate")
+    task_values.set(
+        key=cfg.steps.evaluate.outputs.test_auc.key,
+        value=auc,
+        task_key=cfg.steps.evaluate.outputs.test_auc.task_key,
+    )
     return {"test_auc": auc}
 
 
 def get_step_inputs(task_values: TaskValues, cfg: DictConfig):
-    test_uri = task_values.get(key="test_uri", task_key="prepare_data")
-    if test_uri is None:
-        test_uri = task_values.get(key="test_uri")
-
-    train_run_id = task_values.get(key="train_run_id", task_key="train")
-    if train_run_id is None:
-        train_run_id = task_values.get(key="train_run_id")
+    test_uri = task_values.get(
+        key=cfg.steps.evaluate.inputs.test_uri.key,
+        task_key=cfg.steps.evaluate.inputs.test_uri.task_key,
+    )
+    train_run_id = task_values.get(
+        key=cfg.steps.evaluate.inputs.train_run_id.key,
+        task_key=cfg.steps.evaluate.inputs.train_run_id.task_key,
+    )
     model = mlflow.sklearn.load_model(f"runs:/{train_run_id}/model")
-
     return {"model": model, "test_uri": test_uri}
 
 

@@ -30,16 +30,24 @@ def run(cfg: DictConfig, task_values: TaskValues, model, train_uri: str):
     )
     importances = {col: imp for col, imp in zip(X_pl.columns, result.importances_mean)}
     mlflow.log_dict(importances, "feature_importance.json")
-    task_values.set(key="feature_importance_logged", value=True, task_key="feature_importance")
+    task_values.set(
+        key=cfg.steps.feature_importance.outputs.feature_importance_logged.key,
+        value=True,
+        task_key=cfg.steps.feature_importance.outputs.feature_importance_logged.task_key,
+    )
     return importances
 
 
 def get_step_inputs(task_values: TaskValues, cfg: DictConfig):
-    train_run_id = task_values.get(key="train_run_id", task_key="train")
-    if train_run_id is None:
-        train_run_id = task_values.get(key="train_run_id")
+    train_run_id = task_values.get(
+        key=cfg.steps.feature_importance.inputs.train_run_id.key,
+        task_key=cfg.steps.feature_importance.inputs.train_run_id.task_key,
+    )
     model = mlflow.sklearn.load_model(f"runs:/{train_run_id}/model")
-    train_uri = task_values.get(key="train_uri", task_key="prepare_data") or task_values.get(key="train_uri")
+    train_uri = task_values.get(
+        key=cfg.steps.feature_importance.inputs.train_uri.key,
+        task_key=cfg.steps.feature_importance.inputs.train_uri.task_key,
+    )
     return {"model": model, "train_uri": train_uri}
 
 

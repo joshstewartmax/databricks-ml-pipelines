@@ -34,9 +34,17 @@ def run(cfg: DictConfig, task_values: TaskValues):
     train_df.write.format("delta").mode("overwrite").option("delta.enableDeletionVectors", "false").save(train_uri)
     test_df.write.format("delta").mode("overwrite").option("delta.enableDeletionVectors", "false").save(test_uri)
 
-    # persist URIs directly to task values for downstream steps
-    task_values.set(key="train_uri", value=train_uri, task_key="prepare_data")
-    task_values.set(key="test_uri", value=test_uri, task_key="prepare_data")
+    # persist URIs via config-defined outputs mapping
+    task_values.set(
+        key=cfg.steps.prepare_data.outputs.train_uri.key,
+        value=train_uri,
+        task_key=cfg.steps.prepare_data.outputs.train_uri.task_key,
+    )
+    task_values.set(
+        key=cfg.steps.prepare_data.outputs.test_uri.key,
+        value=test_uri,
+        task_key=cfg.steps.prepare_data.outputs.test_uri.task_key,
+    )
     return {"train_uri": train_uri, "test_uri": test_uri}
 
 
@@ -47,7 +55,11 @@ def main(cfg: DictConfig):
     
     task_values = DatabricksTaskValues()
     pipeline_run_id = begin_pipeline_run(cfg)
-    task_values.set(key="pipeline_run_id", value=pipeline_run_id)
+    task_values.set(
+        key=cfg.steps.prepare_data.outputs.pipeline_run_id.key,
+        value=pipeline_run_id,
+        task_key=cfg.steps.prepare_data.outputs.pipeline_run_id.task_key,
+    )
 
     run_step(
         cfg,

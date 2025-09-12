@@ -13,13 +13,13 @@ def get_spark_session(cfg: DictConfig) -> SparkSession:
     Parameters
     ----------
     cfg: DictConfig
-        Hydra/OmegaConf config expected to contain `experiment.env_name`.
+        Hydra/OmegaConf config expected to contain `pipeline.env_name`.
 
     Returns
     -------
     SparkSession
     """
-    env_name = getattr(cfg.experiment, "env_name", "local")
+    env_name = getattr(cfg.pipeline, "env_name", "local")
 
     if env_name == "local":
         # Configure Spark with Delta Lake for local runs

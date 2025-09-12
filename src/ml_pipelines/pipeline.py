@@ -13,7 +13,7 @@ from ml_pipelines.util.mlflow import begin_pipeline_run
 @hydra.main(version_base=None, config_path="conf", config_name="config")
 def main(cfg: DictConfig):
     """Run the full ML pipeline locally."""
-    mlflow.set_experiment(cfg.experiment.name)
+    mlflow.set_experiment(cfg.pipeline.experiment_name)
     
     # this replicates the functionality of Databricks task values
     task_values = LocalTaskValues()

@@ -51,7 +51,7 @@ def run(cfg: DictConfig, task_values: TaskValues):
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg: DictConfig):
-    mlflow.set_experiment(cfg.experiment.name)
+    mlflow.set_experiment(cfg.pipeline.experiment_name)
     
     task_values = DatabricksTaskValues()
     pipeline_run_id = begin_pipeline_run(cfg)

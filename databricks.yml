@@ -5,9 +5,9 @@ bundle:
   uuid: d17309cf-6583-470f-9459-0e5c32551706
 
 variables:
-  experiment:
-    description: Hydra experiment config to select (dev/prod/local)
-    default: dev
+  pipeline:
+    description: Hydra pipeline config to select (local/databricks-dev/databricks-prod)
+    default: databricks-dev
 
 artifacts:
   python_artifact:
@@ -37,7 +37,7 @@ targets:
       artifacts_dynamic_version: true
 
     variables:
-      experiment: dev
+      pipeline: databricks-dev
 
   prod:
     mode: production
@@ -49,4 +49,4 @@ targets:
       - user_name: j.stewart@codat.io
         level: CAN_MANAGE
     variables:
-      experiment: prod
+      pipeline: databricks-prod

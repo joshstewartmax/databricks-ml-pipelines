@@ -9,7 +9,7 @@ import tempfile
 import pandas as pd
 
 def begin_pipeline_run(cfg: DictConfig) -> str:
-    exp = mlflow.get_experiment_by_name(cfg.experiment.name)
+    exp = mlflow.get_experiment_by_name(cfg.pipeline.experiment_name)
     client = MlflowClient()
     run = client.create_run(
         experiment_id=exp.experiment_id,

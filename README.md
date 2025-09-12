@@ -35,11 +35,11 @@ its own nested MLflow run.
 ## Configuration
 
 Configuration is managed with [Hydra](https://hydra.cc/).  Default
-settings live under `src/ml_pipelines/conf`.  To override the experiment
-used by MLflow:
+settings live under `src/ml_pipelines/conf`.  To override the pipeline
+profile used by MLflow:
 
 ```bash
-uv run run-pipeline experiment=dev
+uv run run-pipeline pipeline=databricks-dev
 ```
 
 ## Steps

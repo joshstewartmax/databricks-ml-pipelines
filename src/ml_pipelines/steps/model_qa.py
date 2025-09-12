@@ -26,7 +26,7 @@ def get_step_inputs(task_values: TaskValues, cfg: DictConfig):
 
 @hydra.main(version_base=None, config_path="../conf", config_name="config")
 def main(cfg: DictConfig):
-    mlflow.set_experiment(cfg.experiment.name)
+    mlflow.set_experiment(cfg.pipeline.experiment_name)
 
     task_values = DatabricksTaskValues()
     pipeline_run_id = task_values.get(key="pipeline_run_id", task_key="prepare_data")

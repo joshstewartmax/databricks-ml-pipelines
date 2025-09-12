@@ -1,5 +1,5 @@
 defaults:
-  - experiment: local
+  - pipeline: local
   - _self_
 
 seed: 42

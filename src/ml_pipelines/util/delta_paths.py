@@ -16,8 +16,8 @@ def build_delta_path(
     Path format:
       "{prefix}/{env_name}/{experiment_name}/{pipeline_run_name_and_id}/{step_run_name_and_id}/{dataset_name}"
     """
-    env_name = getattr(cfg.experiment, "env_name", "local")
-    experiment_name: str = cfg.experiment.name
+    env_name = getattr(cfg.pipeline, "env_name", "local")
+    experiment_name: str = cfg.pipeline.experiment_name
 
     # Choose prefix based on environment
     if env_name == "local":

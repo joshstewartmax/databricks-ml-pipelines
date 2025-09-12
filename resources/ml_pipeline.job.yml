@@ -11,7 +11,7 @@ resources:
           python_wheel_task:
             package_name: databricks-ml-pipelines
             entry_point: prepare-data
-            parameters: ["experiment=${var.experiment}"]
+            parameters: ["pipeline=${var.pipeline}"]
           libraries:
             - whl: ../dist/*.whl
           existing_cluster_id: "0609-090345-4rjuomtp"
@@ -21,7 +21,7 @@ resources:
           python_wheel_task:
             package_name: databricks-ml-pipelines
             entry_point: train-model
-            parameters: ["experiment=${var.experiment}"]
+            parameters: ["pipeline=${var.pipeline}"]
           libraries:
             - whl: ../dist/*.whl
           existing_cluster_id: "0609-090345-4rjuomtp"
@@ -31,7 +31,7 @@ resources:
           python_wheel_task:
             package_name: databricks-ml-pipelines
             entry_point: evaluate-model
-            parameters: ["experiment=${var.experiment}"]
+            parameters: ["pipeline=${var.pipeline}"]
           libraries:
             - whl: ../dist/*.whl
           existing_cluster_id: "0609-090345-4rjuomtp"
@@ -41,7 +41,7 @@ resources:
           python_wheel_task:
             package_name: databricks-ml-pipelines
             entry_point: feature-importance
-            parameters: ["experiment=${var.experiment}"]
+            parameters: ["pipeline=${var.pipeline}"]
           libraries:
             - whl: ../dist/*.whl
           existing_cluster_id: "0609-090345-4rjuomtp"
@@ -52,7 +52,7 @@ resources:
           python_wheel_task:
             package_name: databricks-ml-pipelines
             entry_point: model-qa
-            parameters: ["experiment=${var.experiment}"]
+            parameters: ["pipeline=${var.pipeline}"]
           libraries:
             - whl: ../dist/*.whl
           existing_cluster_id: "0609-090345-4rjuomtp"

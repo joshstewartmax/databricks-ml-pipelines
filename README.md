@@ -1,3 +1,63 @@
+## Quickstart
+
+### Setup
+
+**Install uv**:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+**Install the Databricks CLI and authenticate with OAuth**:
+
+See [here](https://docs.databricks.com/aws/en/dev-tools/cli/tutorial).
+
+**Install OpenJDK 17 for local Spark sessions** (Ubuntu/Debian):
+
+```bash
+sudo apt-get update && sudo apt-get install -y openjdk-17-jdk
+```
+
+**Install project dependencies**:
+
+```bash
+uv sync
+```
+
+### Run locally
+
+**Run the full pipeline locally**:
+
+```bash
+uv run local-pipeline
+```
+
+**View MLflow experiment runs locally**:
+
+```bash
+uv run mlflow server --host 127.0.0.1 --port 8080
+```
+
+Then open `http://127.0.0.1:8080` in your browser.
+
+### Deploy and run on Databricks
+
+**Deploy the Lakeflow bundle to the dev target**:
+
+```bash
+databricks bundle deploy --target dev
+```
+
+**Run the job**:
+- From the UI: open Jobs → `ml-pipeline-dev` → Run now
+- Or via CLI:
+
+```bash
+databricks bundle run ml_pipeline_dev --target dev
+```
+
+---
+
 ## Databricks ML Pipelines – Lakeflow + Hydra + MLflow
 
 This repo demonstrates a maintainable alternative to ad‑hoc Databricks notebooks for ML pipelines. It shows how to:

@@ -21,16 +21,16 @@ This repo demonstrates a maintainable alternative to ad‑hoc Databricks noteboo
 
 ```mermaid
 flowchart LR
-  subgraph Lakeflow Job (Databricks)
-    A[prepare_data<br/>Spark Cluster] --> B[train<br/>Single Node]
-    B --> C[evaluate<br/>Single Node]
-    B --> D[feature_importance<br/>Single Node]
-    C --> E[model_qa<br/>Single Node]
-    D --> E[model_qa<br/>Single Node]
+  subgraph lakeflow[Lakeflow Job]
+    A[prepare_data (Spark)] --> B[train (Single Node)]
+    B --> C[evaluate (Single Node)]
+    B --> D[feature_importance (Single Node)]
+    C --> E[model_qa (Single Node)]
+    D --> E[model_qa (Single Node)]
   end
 
-  subgraph Storage
-    V[/Databricks Volume<br/>/Volumes/ml_artifacts/<env>/<volume>/<experiment>/.../]
+  subgraph storage[Storage]
+    V[/Databricks Volume /Volumes/ml_artifacts/{env}/{volume}/{experiment}/.../]
   end
 
   A -- writes Delta --> V
